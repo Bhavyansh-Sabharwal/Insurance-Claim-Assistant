@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -18,15 +18,24 @@ import {
   Select,
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon, AddIcon } from '@chakra-ui/icons';
-
-type Document = {
-  id: string;
-  name: string;
-  type: string;
-  category: string;
-  uploadDate: string;
-  size: string;
-};
+import { useAuth } from '../contexts/AuthContext';
+import { storage, db } from '../config/firebase';
+import { 
+  ref, 
+  uploadBytesResumable, 
+  getDownloadURL,
+  deleteObject 
+} from 'firebase/storage';
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs,
+  deleteDoc,
+  doc 
+} from 'firebase/firestore';
+import { DocumentReference } from '../types/models';
 
 const categories = [
   'Receipts',
@@ -36,62 +45,198 @@ const categories = [
   'Other',
 ];
 
+interface StoredDocument extends DocumentReference {
+  category: string;
+  userId: string;
+  firestoreId?: string;
+  size: number;
+}
+
 const Documents = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<StoredDocument[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
+  const { currentUser } = useAuth();
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.700');
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
+  // Fetch user's documents on component mount
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!currentUser) return;
 
-    setUploading(true);
-    // Simulate file upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setUploading(false);
-        setUploadProgress(0);
-
-        // Add uploaded files to documents
-        Array.from(files).forEach(file => {
-          const newDoc: Document = {
-            id: Date.now().toString(),
-            name: file.name,
-            type: file.type,
-            category: selectedCategory || 'Other',
-            uploadDate: new Date().toLocaleDateString(),
-            size: formatFileSize(file.size),
+      try {
+        const q = query(
+          collection(db, 'documents'),
+          where('userId', '==', currentUser.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        const docs = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            firestoreId: doc.id,
+            uploadedAt: data.uploadedAt?.toDate() // Convert Firestore Timestamp to Date
           };
-          setDocuments(prev => [...prev, newDoc]);
-        });
-
+        }) as StoredDocument[];
+        setDocuments(docs);
+      } catch (error) {
+        console.error('Fetch error:', error);
         toast({
-          title: 'Upload Complete',
-          description: `Successfully uploaded ${files.length} file(s)`,
-          status: 'success',
-          duration: 3000,
+          title: 'Error fetching documents',
+          description: 'Failed to load your documents',
+          status: 'error',
+          duration: 5000,
           isClosable: true,
         });
       }
-    }, 200);
-  }, [selectedCategory, toast]);
+    };
 
-  const handleDelete = (id: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
-    toast({
-      title: 'Document Deleted',
-      status: 'info',
-      duration: 2000,
-      isClosable: true,
-    });
+    fetchDocuments();
+  }, [currentUser, toast]);
+
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !currentUser || !selectedCategory) {
+      toast({
+        title: 'Error',
+        description: 'Please select a category and files to upload',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      for (const file of Array.from(files)) {
+        // Create a storage reference
+        const fileName = `${currentUser.uid}/${Date.now()}-${file.name}`;
+        const storageRef = ref(storage, fileName);
+
+        // Upload file with progress monitoring
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        await new Promise<void>((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress);
+            },
+            (error) => {
+              reject(error);
+            },
+            async () => {
+              try {
+                // Get download URL
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+                // Create document reference in Firestore
+                const docRef = await addDoc(collection(db, 'documents'), {
+                  id: fileName,
+                  userId: currentUser.uid,
+                  type: file.type.startsWith('image/') ? 'photo' : 'receipt',
+                  fileName: file.name,
+                  storageUrl: downloadURL,
+                  category: selectedCategory,
+                  isBlurred: false,
+                  uploadedAt: new Date(),
+                  size: file.size
+                });
+
+                // Add to local state
+                const newDoc: StoredDocument = {
+                  id: fileName,
+                  userId: currentUser.uid,
+                  type: file.type.startsWith('image/') ? 'photo' : 'receipt',
+                  fileName: file.name,
+                  storageUrl: downloadURL,
+                  category: selectedCategory,
+                  isBlurred: false,
+                  uploadedAt: new Date(),
+                  firestoreId: docRef.id,
+                  size: file.size
+                };
+
+                setDocuments(prev => [...prev, newDoc]);
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            }
+          );
+        });
+      }
+
+      toast({
+        title: 'Upload Complete',
+        description: `Successfully uploaded ${files.length} file(s)`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload Error',
+        description: 'Failed to upload one or more files',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }, [currentUser, selectedCategory, toast]);
+
+  const handleDelete = async (document: StoredDocument) => {
+    if (!document.firestoreId) return;
+
+    try {
+      // Delete from Storage
+      const storageRef = ref(storage, document.id);
+      await deleteObject(storageRef);
+
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'documents', document.firestoreId));
+
+      // Update local state
+      setDocuments(prev => prev.filter(doc => doc.firestoreId !== document.firestoreId));
+
+      toast({
+        title: 'Document Deleted',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete document',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDownload = async (document: StoredDocument) => {
+    try {
+      window.open(document.storageUrl, '_blank');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to download document',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -118,10 +263,11 @@ const Documents = () => {
 
         <Flex gap={4} wrap="wrap">
           <Select
-            placeholder="Filter by category"
+            placeholder="Select category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             maxW="200px"
+            isRequired
           >
             {categories.map(category => (
               <option key={category} value={category}>
@@ -137,7 +283,7 @@ const Documents = () => {
               onChange={handleFileUpload}
               hidden
               id="file-upload"
-              disabled={uploading}
+              disabled={uploading || !selectedCategory}
             />
             <Button
               as="label"
@@ -146,6 +292,7 @@ const Documents = () => {
               colorScheme="blue"
               cursor="pointer"
               isLoading={uploading}
+              isDisabled={!selectedCategory}
             >
               Upload Files
             </Button>
@@ -162,7 +309,7 @@ const Documents = () => {
               <Stack spacing={3}>
                 <Flex justify="space-between" align="center">
                   <Heading size="sm" noOfLines={1}>
-                    {doc.name}
+                    {doc.fileName}
                   </Heading>
                   <Badge colorScheme="blue">
                     {doc.category}
@@ -170,11 +317,11 @@ const Documents = () => {
                 </Flex>
                 
                 <Text fontSize="sm" color="gray.500">
-                  Uploaded: {doc.uploadDate}
+                  Uploaded: {doc.uploadedAt instanceof Date ? doc.uploadedAt.toLocaleDateString() : 'Unknown date'}
                 </Text>
                 
                 <Text fontSize="sm" color="gray.500">
-                  Size: {doc.size}
+                  Size: {formatFileSize(doc.size || 0)}
                 </Text>
 
                 <Flex justify="flex-end" gap={2}>
@@ -183,6 +330,7 @@ const Documents = () => {
                     icon={<DownloadIcon />}
                     size="sm"
                     variant="ghost"
+                    onClick={() => handleDownload(doc)}
                   />
                   <IconButton
                     aria-label="Delete document"
@@ -190,7 +338,7 @@ const Documents = () => {
                     size="sm"
                     variant="ghost"
                     colorScheme="red"
-                    onClick={() => handleDelete(doc.id)}
+                    onClick={() => handleDelete(doc)}
                   />
                 </Flex>
               </Stack>
