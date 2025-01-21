@@ -119,7 +119,13 @@ const ItemCard = ({
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   return (
-    <Card p={4} bg={bgColor} borderColor={borderColor} boxShadow="none">
+    <Card 
+      p={4} 
+      bg={bgColor} 
+      borderColor={borderColor} 
+      boxShadow="none" 
+      transition="transform 0.2s ease"
+    >
       <Stack spacing={2}>
         {isEditing ? (
           <EditItemForm
