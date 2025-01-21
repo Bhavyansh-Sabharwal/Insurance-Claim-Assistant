@@ -4,25 +4,31 @@ import { Box } from '@chakra-ui/react';
 
 type SortableItemProps = {
   id: string;
-  children: (provided: {
-    listeners: any;
-    attributes: any;
-  }) => React.ReactNode;
+  children: React.ReactNode;
 };
 
 export function SortableItem({ id, children }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const { 
+    attributes, 
+    listeners, 
+    setNodeRef, 
+    transform, 
+    transition,
+    isDragging 
+  } = useSortable({ id });
 
   return (
     <Box
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition
+        transition,
+        opacity: isDragging ? 0.5 : undefined
       }}
       {...attributes}
+      {...listeners}
     >
-      {children({ listeners, attributes })}
+      {children}
     </Box>
   );
 } 
