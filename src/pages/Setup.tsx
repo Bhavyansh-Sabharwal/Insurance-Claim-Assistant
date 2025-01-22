@@ -196,7 +196,6 @@ const Setup = () => {
                 <option value="fr">Français</option>
                 <option value="de">Deutsch</option>
                 <option value="hi">हिन्दी</option>
-                <option value="zh">中文</option>
               </Select>
             </FormControl>
             <FormControl isRequired>

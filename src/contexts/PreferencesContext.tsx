@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { updateUserProfile } from '../services/database';
 
-export type Language = 'en' | 'es' | 'fr' | 'de' | 'hi' | 'zh';
+export type Language = 'en' | 'es' | 'fr' | 'de' | 'hi';
 export type Currency = 'USD' | 'EUR' | 'GBP';
 
 interface Preferences {
