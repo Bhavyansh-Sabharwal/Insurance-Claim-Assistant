@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { 
+  Auth,
   User,
   GoogleAuthProvider,
   signInWithPopup,
