@@ -67,7 +67,7 @@ interface FormData {
 
 const Setup = () => {
   const { currentUser } = useAuth();
-  const { updatePreferences, setPreferencesImmediately } = usePreferences();
+  const { setPreferencesImmediately } = usePreferences();
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
   const toast = useToast();
