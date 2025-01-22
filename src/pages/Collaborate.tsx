@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -24,13 +24,9 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { DeleteIcon, EmailIcon } from '@chakra-ui/icons';
-import { httpsCallable } from 'firebase/functions';
-import { useAuth } from '../contexts/AuthContext';
-import { functions } from '../config/firebase';
 
 type Collaboration = {
   id: string;
-  inviterId: string;
   inviteeEmail: string;
   role: string;
   status: 'pending' | 'accepted' | 'rejected';
@@ -55,42 +51,25 @@ const Collaborate = () => {
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const { currentUser } = useAuth();
-
-  // Function to fetch collaborations
-  const fetchCollaborations = async () => {
-    try {
-      const getCollaborationsFunc = httpsCallable(functions, 'getCollaborations');
-      const result = await getCollaborationsFunc();
-      setCollaborations(result.data as { sent: Collaboration[]; received: Collaboration[] });
-    } catch (error) {
-      console.error('Error fetching collaborations:', error);
-      toast({
-        title: 'Error fetching collaborations',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
-  // Fetch collaborations on component mount
-  useEffect(() => {
-    if (currentUser) {
-      fetchCollaborations();
-    }
-  }, [currentUser]);
 
   const handleInvite = async () => {
     if (!newEmail) return;
     
     setIsLoading(true);
     try {
-      const sendInviteFunc = httpsCallable(functions, 'sendCollaborationInvite');
-      await sendInviteFunc({
+      // Placeholder for backend functionality
+      const mockCollaboration: Collaboration = {
+        id: Date.now().toString(),
         inviteeEmail: newEmail,
         role: newRole,
-      });
+        status: 'pending',
+        dateInvited: new Date().toISOString(),
+      };
+
+      setCollaborations(prev => ({
+        ...prev,
+        sent: [...prev.sent, mockCollaboration]
+      }));
 
       setNewEmail('');
       toast({
@@ -100,14 +79,10 @@ const Collaborate = () => {
         duration: 3000,
         isClosable: true,
       });
-
-      // Refresh collaborations list
-      fetchCollaborations();
     } catch (error: any) {
-      console.error('Error sending invite:', error);
       toast({
         title: 'Error sending invite',
-        description: error.message,
+        description: 'Failed to send invitation',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -119,8 +94,10 @@ const Collaborate = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const deleteInviteFunc = httpsCallable(functions, 'deleteCollaborationInvite');
-      await deleteInviteFunc({ collaborationId: id });
+      setCollaborations(prev => ({
+        ...prev,
+        sent: prev.sent.filter(collab => collab.id !== id)
+      }));
       
       toast({
         title: 'Invitation deleted',
@@ -128,11 +105,7 @@ const Collaborate = () => {
         duration: 2000,
         isClosable: true,
       });
-
-      // Refresh collaborations list
-      fetchCollaborations();
     } catch (error) {
-      console.error('Error deleting invite:', error);
       toast({
         title: 'Error deleting invitation',
         status: 'error',
@@ -144,12 +117,6 @@ const Collaborate = () => {
 
   const handleResend = async (email: string) => {
     try {
-      const resendInviteFunc = httpsCallable(functions, 'sendCollaborationInvite');
-      await resendInviteFunc({
-        inviteeEmail: email,
-        role: newRole,
-      });
-
       toast({
         title: 'Invitation resent',
         description: `Invitation resent to ${email}`,
@@ -158,7 +125,6 @@ const Collaborate = () => {
         isClosable: true,
       });
     } catch (error) {
-      console.error('Error resending invite:', error);
       toast({
         title: 'Error resending invitation',
         status: 'error',
@@ -167,14 +133,6 @@ const Collaborate = () => {
       });
     }
   };
-
-  if (!currentUser) {
-    return (
-      <Container maxW="container.xl" py={8}>
-        <Text>Please sign in to access collaboration features.</Text>
-      </Container>
-    );
-  }
 
   return (
     <Container maxW="container.xl" py={8}>
@@ -249,31 +207,34 @@ const Collaborate = () => {
                       <Td>{collaboration.inviteeEmail}</Td>
                       <Td>{collaboration.role}</Td>
                       <Td>
-                        <Badge colorScheme={collaboration.status === 'accepted' ? 'green' : 'yellow'}>
+                        <Badge
+                          colorScheme={
+                            collaboration.status === 'accepted'
+                              ? 'green'
+                              : collaboration.status === 'rejected'
+                              ? 'red'
+                              : 'yellow'
+                          }
+                        >
                           {collaboration.status}
                         </Badge>
                       </Td>
                       <Td>{new Date(collaboration.dateInvited).toLocaleDateString()}</Td>
                       <Td>
-                        <Flex gap={2}>
-                          {collaboration.status === 'pending' && (
-                            <IconButton
-                              aria-label="Resend invitation"
-                              icon={<EmailIcon />}
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleResend(collaboration.inviteeEmail)}
-                            />
-                          )}
-                          <IconButton
-                            aria-label="Delete invitation"
-                            icon={<DeleteIcon />}
-                            size="sm"
-                            variant="ghost"
-                            colorScheme="red"
-                            onClick={() => handleDelete(collaboration.id)}
-                          />
-                        </Flex>
+                        <IconButton
+                          aria-label="Delete invitation"
+                          icon={<DeleteIcon />}
+                          size="sm"
+                          colorScheme="red"
+                          onClick={() => handleDelete(collaboration.id)}
+                        />
+                        <IconButton
+                          aria-label="Resend invitation"
+                          icon={<EmailIcon />}
+                          size="sm"
+                          ml={2}
+                          onClick={() => handleResend(collaboration.inviteeEmail)}
+                        />
                       </Td>
                     </Tr>
                   ))}
@@ -281,44 +242,6 @@ const Collaborate = () => {
               </Table>
             </Stack>
           </Card>
-        )}
-
-        {collaborations.received.length > 0 && (
-          <Card p={6} bg={bgColor} borderColor={borderColor}>
-            <Stack spacing={6}>
-              <Heading size="md">Received Invitations</Heading>
-              <Table variant="simple">
-                <Thead>
-                  <Tr>
-                    <Th>From</Th>
-                    <Th>Role</Th>
-                    <Th>Status</Th>
-                    <Th>Date Invited</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {collaborations.received.map(collaboration => (
-                    <Tr key={collaboration.id}>
-                      <Td>{collaboration.inviterId}</Td>
-                      <Td>{collaboration.role}</Td>
-                      <Td>
-                        <Badge colorScheme={collaboration.status === 'accepted' ? 'green' : 'yellow'}>
-                          {collaboration.status}
-                        </Badge>
-                      </Td>
-                      <Td>{new Date(collaboration.dateInvited).toLocaleDateString()}</Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </Stack>
-          </Card>
-        )}
-
-        {collaborations.sent.length === 0 && collaborations.received.length === 0 && (
-          <Box textAlign="center" py={8}>
-            <Text color="gray.500">No invitations yet</Text>
-          </Box>
         )}
       </Stack>
     </Container>
