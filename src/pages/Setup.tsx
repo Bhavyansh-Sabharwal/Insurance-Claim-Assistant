@@ -143,23 +143,24 @@ const Setup = () => {
       
       const allRooms = [...selectedRooms, ...formData.customRooms];
       
-      for (let i = 0; i < allRooms.length; i++) {
+      // Use Promise.all to wait for all room creations to complete
+      await Promise.all(allRooms.map(async (roomName, i) => {
         const roomRef = doc(collection(db, 'rooms'));
         await setDoc(roomRef, {
           id: roomRef.id,
-          name: allRooms[i],
+          name: roomName,
           items: [],
           userId: currentUser.uid,
           orderIndex: i,
         });
-      }
+      }));
       
-      navigate('/inventory');
+      window.location.href = '/inventory';
     } catch (error) {
       console.error('Setup error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save preferences',
+        description: 'Failed to complete setup. Please try again.',
         status: 'error',
         duration: 5000,
         isClosable: true,
