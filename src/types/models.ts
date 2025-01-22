@@ -50,4 +50,17 @@ export interface Room {
   items: InventoryItem[];
   userId: string;
   orderIndex: number;
+}
+
+export interface StoredDocument {
+  id: string;
+  userId: string;
+  type: string;
+  fileName: string;
+  storageUrl: string;
+  category: string;
+  isBlurred: boolean;
+  uploadedAt: Date;
+  firestoreId: string;
+  size: number;
 } 

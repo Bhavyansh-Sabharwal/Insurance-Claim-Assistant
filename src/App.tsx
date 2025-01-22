@@ -1,6 +1,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PreferencesProvider } from './contexts/PreferencesContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
@@ -68,56 +69,58 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireSetup 
 function App() {
   return (
     <ChakraProvider theme={theme}>
-      <AuthProvider>
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/setup"
-                element={
-                  <ProtectedRoute requireSetup>
-                    <Setup />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/inventory"
-                element={
-                  <ProtectedRoute>
-                    <Inventory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/documents"
-                element={
-                  <ProtectedRoute>
-                    <Documents />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/collaborate"
-                element={
-                  <ProtectedRoute>
-                    <Collaborate />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </Layout>
-        </Router>
-      </AuthProvider>
+      <Router>
+        <AuthProvider>
+          <PreferencesProvider>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/setup"
+                  element={
+                    <ProtectedRoute requireSetup>
+                      <Setup />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/inventory"
+                  element={
+                    <ProtectedRoute>
+                      <Inventory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/documents"
+                  element={
+                    <ProtectedRoute>
+                      <Documents />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/collaborate"
+                  element={
+                    <ProtectedRoute>
+                      <Collaborate />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </Layout>
+          </PreferencesProvider>
+        </AuthProvider>
+      </Router>
     </ChakraProvider>
   );
 }

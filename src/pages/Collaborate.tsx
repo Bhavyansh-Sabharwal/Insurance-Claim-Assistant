@@ -24,6 +24,7 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { DeleteIcon, EmailIcon } from '@chakra-ui/icons';
+import { useLocalization } from '../hooks/useLocalization';
 
 type Collaborator = {
   id: string;
@@ -40,25 +41,16 @@ const roles = [
 ];
 
 const Collaborate = () => {
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [newEmail, setNewEmail] = useState('');
-  const [newRole, setNewRole] = useState('Editor');
-  
+  const [newRole, setNewRole] = useState(roles[0]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const { t } = useLocalization();
 
   const handleInvite = () => {
-    if (!newEmail) {
-      toast({
-        title: 'Email Required',
-        description: 'Please enter an email address',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
+    if (!newEmail) return;
 
     const newCollaborator: Collaborator = {
       id: Date.now().toString(),
@@ -68,11 +60,11 @@ const Collaborate = () => {
       dateInvited: new Date().toLocaleDateString(),
     };
 
-    setCollaborators(prev => [...prev, newCollaborator]);
+    setCollaborators([...collaborators, newCollaborator]);
     setNewEmail('');
-
+    
     toast({
-      title: 'Invitation Sent',
+      title: t('collaborate.inviteSent'),
       description: `Invitation sent to ${newEmail}`,
       status: 'success',
       duration: 3000,
@@ -80,11 +72,11 @@ const Collaborate = () => {
     });
   };
 
-  const handleRemove = (id: string) => {
-    setCollaborators(prev => prev.filter(c => c.id !== id));
+  const handleDelete = (id: string) => {
+    setCollaborators(collaborators.filter(c => c.id !== id));
     toast({
-      title: 'Collaborator Removed',
-      status: 'info',
+      title: t('collaborate.inviteDeleted'),
+      status: 'success',
       duration: 2000,
       isClosable: true,
     });
@@ -92,7 +84,7 @@ const Collaborate = () => {
 
   const handleResend = (email: string) => {
     toast({
-      title: 'Invitation Resent',
+      title: t('collaborate.inviteResent'),
       description: `Invitation resent to ${email}`,
       status: 'success',
       duration: 3000,
@@ -104,36 +96,36 @@ const Collaborate = () => {
     <Container maxW="container.xl" py={8}>
       <Stack spacing={8}>
         <Box>
-          <Heading size="lg" mb={4}>Collaboration</Heading>
+          <Heading size="lg" mb={4}>{t('collaborate.title')}</Heading>
           <Text color={useColorModeValue('gray.600', 'gray.300')}>
-            Invite others to help with your insurance claim documentation.
+            {t('collaborate.description')}
           </Text>
         </Box>
 
         <Card p={6} bg={bgColor} borderColor={borderColor}>
           <Stack spacing={6}>
-            <Heading size="md">Invite Collaborators</Heading>
+            <Heading size="md">{t('collaborate.invite')}</Heading>
             
             <Flex gap={4} direction={{ base: 'column', md: 'row' }}>
               <FormControl>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>{t('collaborate.email')}</FormLabel>
                 <Input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="Enter email address"
+                  placeholder={t('placeholder.enterEmail')}
                 />
               </FormControl>
 
               <FormControl maxW={{ base: '100%', md: '200px' }}>
-                <FormLabel>Role</FormLabel>
+                <FormLabel>{t('collaborate.role')}</FormLabel>
                 <Select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                 >
                   {roles.map(role => (
                     <option key={role} value={role}>
-                      {role}
+                      {t(`collaborate.roles.${role.toLowerCase()}`)}
                     </option>
                   ))}
                 </Select>
@@ -146,76 +138,67 @@ const Collaborate = () => {
                 alignSelf={{ base: 'stretch', md: 'flex-end' }}
                 mt={{ base: 0, md: 8 }}
               >
-                Send Invitation
+                {t('collaborate.sendInvite')}
               </Button>
             </Flex>
           </Stack>
         </Card>
 
-        <Card p={6} bg={bgColor} borderColor={borderColor}>
-          <Stack spacing={6}>
-            <Heading size="md">Current Collaborators</Heading>
-            
-            <Box overflowX="auto">
+        {collaborators.length > 0 ? (
+          <Card p={6} bg={bgColor} borderColor={borderColor}>
+            <Stack spacing={6}>
+              <Heading size="md">{t('collaborate.pendingInvites')}</Heading>
               <Table variant="simple">
                 <Thead>
                   <Tr>
-                    <Th>Email</Th>
-                    <Th>Role</Th>
-                    <Th>Status</Th>
-                    <Th>Date Invited</Th>
-                    <Th>Actions</Th>
+                    <Th>{t('collaborate.email')}</Th>
+                    <Th>{t('collaborate.role')}</Th>
+                    <Th>{t('collaborate.status')}</Th>
+                    <Th>{t('collaborate.dateInvited')}</Th>
+                    <Th>{t('collaborate.actions')}</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {collaborators.map(collaborator => (
                     <Tr key={collaborator.id}>
                       <Td>{collaborator.email}</Td>
-                      <Td>{collaborator.role}</Td>
+                      <Td>{t(`collaborate.roles.${collaborator.role.toLowerCase()}`)}</Td>
                       <Td>
-                        <Badge
-                          colorScheme={collaborator.status === 'active' ? 'green' : 'yellow'}
-                        >
-                          {collaborator.status}
+                        <Badge colorScheme={collaborator.status === 'active' ? 'green' : 'yellow'}>
+                          {t(`collaborate.status.${collaborator.status}`)}
                         </Badge>
                       </Td>
                       <Td>{collaborator.dateInvited}</Td>
                       <Td>
-                        <Stack direction="row" spacing={2}>
-                          {collaborator.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              leftIcon={<EmailIcon />}
-                              onClick={() => handleResend(collaborator.email)}
-                            >
-                              Resend
-                            </Button>
-                          )}
+                        <Flex gap={2}>
                           <IconButton
-                            aria-label="Remove collaborator"
+                            aria-label={t('button.resend')}
+                            icon={<EmailIcon />}
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleResend(collaborator.email)}
+                          />
+                          <IconButton
+                            aria-label={t('button.delete')}
                             icon={<DeleteIcon />}
                             size="sm"
-                            colorScheme="red"
                             variant="ghost"
-                            onClick={() => handleRemove(collaborator.id)}
+                            colorScheme="red"
+                            onClick={() => handleDelete(collaborator.id)}
                           />
-                        </Stack>
+                        </Flex>
                       </Td>
                     </Tr>
                   ))}
                 </Tbody>
               </Table>
-
-              {collaborators.length === 0 && (
-                <Box textAlign="center" py={8}>
-                  <Text color="gray.500">
-                    No collaborators added yet
-                  </Text>
-                </Box>
-              )}
-            </Box>
-          </Stack>
-        </Card>
+            </Stack>
+          </Card>
+        ) : (
+          <Box textAlign="center" py={8}>
+            <Text color="gray.500">{t('collaborate.noInvites')}</Text>
+          </Box>
+        )}
       </Stack>
     </Container>
   );

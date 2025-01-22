@@ -1,6 +1,7 @@
 import { Box, Button, Container, Heading, SimpleGrid, Text, VStack, Icon, useColorModeValue } from '@chakra-ui/react';
 import { FaClipboardList, FaUpload, FaUsers, FaGlobe } from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
+import { useLocalization } from '../hooks/useLocalization';
 
 const Feature = ({ icon, title, text }: { icon: any; title: string; text: string }) => {
   return (
@@ -20,6 +21,8 @@ const Feature = ({ icon, title, text }: { icon: any; title: string; text: string
 };
 
 const Home = () => {
+  const { t } = useLocalization();
+  
   return (
     <Box>
       {/* Hero Section */}
@@ -37,10 +40,10 @@ const Home = () => {
             mb={6}
             color={useColorModeValue('blue.600', 'blue.200')}
           >
-            Simplify Your Insurance Claims Process
+            {t('home.heroTitle')}
           </Heading>
           <Text fontSize="xl" mb={8} color={useColorModeValue('gray.600', 'gray.300')}>
-            A user-friendly platform designed to help wildfire survivors document and manage their insurance claims efficiently.
+            {t('home.heroSubtitle')}
           </Text>
           <Button
             as={RouterLink}
@@ -49,7 +52,7 @@ const Home = () => {
             colorScheme="blue"
             px={8}
           >
-            Get Started
+            {t('home.getStarted')}
           </Button>
         </Container>
       </Box>
@@ -59,23 +62,23 @@ const Home = () => {
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={8}>
           <Feature
             icon={FaClipboardList}
-            title="Guided Inventory"
-            text="Create comprehensive inventories with our intuitive checklist system and memory aids."
+            title={t('home.features.inventory')}
+            text={t('home.features.inventoryDesc')}
           />
           <Feature
             icon={FaUpload}
-            title="Easy Documentation"
-            text="Upload and organize receipts, photos, and other documentation seamlessly."
+            title={t('home.features.documents')}
+            text={t('home.features.documentsDesc')}
           />
           <Feature
             icon={FaUsers}
-            title="Collaboration"
-            text="Work together with family members or trusted friends on your claim."
+            title={t('home.features.collaborate')}
+            text={t('home.features.collaborateDesc')}
           />
           <Feature
             icon={FaGlobe}
-            title="Accessibility"
-            text="Multiple language support and currency conversion for everyone's needs."
+            title={t('home.features.accessibility')}
+            text={t('home.features.accessibilityDesc')}
           />
         </SimpleGrid>
       </Container>

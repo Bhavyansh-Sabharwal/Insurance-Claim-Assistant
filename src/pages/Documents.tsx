@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon, AddIcon } from '@chakra-ui/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocalization } from '../hooks/useLocalization';
 import { storage, db } from '../config/firebase';
 import { 
   ref, 
@@ -35,22 +36,7 @@ import {
   deleteDoc,
   doc 
 } from 'firebase/firestore';
-import { DocumentReference } from '../types/models';
-
-const categories = [
-  'Receipts',
-  'Photos',
-  'Insurance Documents',
-  'Property Records',
-  'Other',
-];
-
-interface StoredDocument extends DocumentReference {
-  category: string;
-  userId: string;
-  firestoreId?: string;
-  size: number;
-}
+import { StoredDocument } from '../types/models';
 
 const Documents = () => {
   const [documents, setDocuments] = useState<StoredDocument[]>([]);
@@ -59,8 +45,18 @@ const Documents = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const { currentUser } = useAuth();
+  const { t } = useLocalization();
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.700');
+
+  // Move the categories definition inside the component
+  const categories = [
+    t('documents.categories.receipts'),
+    t('documents.categories.photos'),
+    t('documents.categories.insurance'),
+    t('documents.categories.property'),
+    t('documents.categories.other'),
+  ];
 
   // Fetch user's documents on component mount
   useEffect(() => {
@@ -255,15 +251,15 @@ const Documents = () => {
     <Container maxW="container.xl" py={8}>
       <Stack spacing={8}>
         <Box>
-          <Heading size="lg" mb={4}>Documents</Heading>
+          <Heading size="lg" mb={4}>{t('documents.title')}</Heading>
           <Text color={useColorModeValue('gray.600', 'gray.300')}>
-            Upload and manage your documentation for the insurance claim.
+            {t('documents.description')}
           </Text>
         </Box>
 
         <Flex gap={4} wrap="wrap">
           <Select
-            placeholder="Select category"
+            placeholder={t('placeholder.selectCategory')}
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             maxW="200px"
@@ -294,7 +290,7 @@ const Documents = () => {
               isLoading={uploading}
               isDisabled={!selectedCategory}
             >
-              Upload Files
+              {t('documents.upload')}
             </Button>
           </Box>
         </Flex>
@@ -317,23 +313,23 @@ const Documents = () => {
                 </Flex>
                 
                 <Text fontSize="sm" color="gray.500">
-                  Uploaded: {doc.uploadedAt instanceof Date ? doc.uploadedAt.toLocaleDateString() : 'Unknown date'}
+                  {t('documents.uploadDate')}: {doc.uploadedAt instanceof Date ? doc.uploadedAt.toLocaleDateString() : 'Unknown date'}
                 </Text>
                 
                 <Text fontSize="sm" color="gray.500">
-                  Size: {formatFileSize(doc.size || 0)}
+                  {t('documents.fileSize')}: {formatFileSize(doc.size || 0)}
                 </Text>
 
                 <Flex justify="flex-end" gap={2}>
                   <IconButton
-                    aria-label="Download document"
+                    aria-label={t('button.download')}
                     icon={<DownloadIcon />}
                     size="sm"
                     variant="ghost"
                     onClick={() => handleDownload(doc)}
                   />
                   <IconButton
-                    aria-label="Delete document"
+                    aria-label={t('button.delete')}
                     icon={<DeleteIcon />}
                     size="sm"
                     variant="ghost"
@@ -350,8 +346,8 @@ const Documents = () => {
           <Box textAlign="center" py={8}>
             <Text color="gray.500">
               {selectedCategory
-                ? `No documents found in the ${selectedCategory} category`
-                : 'No documents uploaded yet'}
+                ? t('documents.noCategoryDocuments')
+                : t('documents.noDocuments')}
             </Text>
           </Box>
         )}
