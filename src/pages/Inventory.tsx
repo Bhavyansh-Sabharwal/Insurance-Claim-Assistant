@@ -180,21 +180,49 @@ const EditItemForm = ({
   onCancel: () => void;
 }) => {
   const { t } = useLocalization();
+  const [formData, setFormData] = useState({
+    name: editData.name || item.name,
+    description: editData.description || item.description,
+    category: editData.category || item.category,
+    estimatedValue: editData.estimatedValue || item.estimatedValue,
+  });
+
+  const handleSubmit = () => {
+    if (!formData.name?.trim()) return;
+    Object.assign(editData, formData);
+    onSubmit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === 'Enter' && formData.name?.trim()) {
+      handleSubmit();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
   return (
-    <Stack spacing={2} width="100%">
+    <Stack 
+      spacing={2} 
+      width="100%" 
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={handleKeyDown}
+    >
       <Input
-        value={editData.name || item.name}
-        onChange={(e) => editData.name = e.target.value}
+        value={formData.name ?? ''}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         placeholder={t('inventory.itemName')}
+        autoFocus
       />
       <Input
-        value={editData.description || item.description}
-        onChange={(e) => editData.description = e.target.value}
+        value={formData.description ?? ''}
+        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         placeholder={t('inventory.description')}
       />
       <Select
-        value={editData.category || item.category}
-        onChange={(e) => editData.category = e.target.value as TranslationKey}
+        value={formData.category}
+        onChange={(e) => setFormData({ ...formData, category: e.target.value as TranslationKey })}
       >
         {categories.map(category => (
           <option key={category} value={category}>
@@ -204,13 +232,20 @@ const EditItemForm = ({
       </Select>
       <Input
         type="number"
-        value={editData.estimatedValue || item.estimatedValue}
-        onChange={(e) => editData.estimatedValue = Number(e.target.value)}
+        value={formData.estimatedValue ?? ''}
+        onChange={(e) => setFormData({ ...formData, estimatedValue: Number(e.target.value) })}
         placeholder={t('inventory.estimatedValue')}
       />
       <Flex gap={2} justify="flex-end">
         <Button size="sm" onClick={onCancel}>{t('button.cancel')}</Button>
-        <Button size="sm" colorScheme="blue" onClick={onSubmit}>{t('button.save')}</Button>
+        <Button 
+          size="sm" 
+          colorScheme="blue" 
+          onClick={handleSubmit}
+          isDisabled={!formData.name?.trim()}
+        >
+          {t('button.save')}
+        </Button>
       </Flex>
     </Stack>
   );
@@ -716,4 +751,4 @@ const Inventory = () => {
   );
 };
 
-export default Inventory; 
+export default Inventory;
