@@ -575,7 +575,7 @@ const Inventory = () => {
       onDragOver={handleDragOver}
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
     >
-      <Container maxW="container.xl" py={8} style={{ overflow: 'hidden' }}>
+      <Container maxW="container.xl" py={0} px={0} style={{ overflow: 'hidden' }}>
         <Grid templateColumns={{ base: '1fr', md: '250px 1fr' }} gap={8}>
           {/* Rooms Sidebar */}
           <Stack spacing={4}>

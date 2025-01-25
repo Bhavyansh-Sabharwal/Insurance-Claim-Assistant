@@ -133,21 +133,7 @@ const Setup = () => {
     if (!currentUser) return;
 
     try {
-      // Save user preferences
-      await updateUserProfile(currentUser.uid, {
-        preferences: {
-          language: formData.language,
-          currency: formData.currency
-        },
-        propertyDetails: {
-          type: formData.propertyType,
-          address: formData.address,
-          rooms: formData.rooms.filter(room => room.selected).length + formData.customRooms.length
-        },
-        setupCompleted: true
-      });
-
-      // Create rooms in Firestore
+      // Create rooms in Firestore first
       const selectedRooms = formData.rooms
         .filter(room => room.selected)
         .map(room => room.name);
@@ -166,6 +152,24 @@ const Setup = () => {
           orderIndex: i,
         });
       }));
+
+      // Save user preferences and mark setup as completed
+      const userRef = doc(db, 'users', currentUser.uid);
+      await setDoc(userRef, {
+        preferences: {
+          language: formData.language,
+          currency: formData.currency
+        },
+        propertyDetails: {
+          type: formData.propertyType,
+          address: formData.address,
+          rooms: formData.rooms.filter(room => room.selected).length + formData.customRooms.length
+        },
+        setupCompleted: true
+      }, { merge: true });
+
+      // Wait a moment for Firestore to sync
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       navigate('/inventory');
     } catch (error) {
