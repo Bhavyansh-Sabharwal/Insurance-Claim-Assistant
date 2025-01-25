@@ -11,6 +11,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  HStack,
+  Image,
 } from '@chakra-ui/react';
 
 interface PanoramaCaptureProps {
@@ -30,6 +32,10 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
   const [isCapturing, setIsCapturing] = useState(false);
   const [deviceOrientation, setDeviceOrientation] = useState<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const [isPanoramaMode, setIsPanoramaMode] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const capturedFramesRef = useRef<HTMLCanvasElement[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +44,10 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
     } else {
       stopCamera();
       stopOrientationTracking();
+      setIsPanoramaMode(false);
+      setPreviewImage(null);
+      setShowPreview(false);
+      capturedFramesRef.current = [];
     }
 
     return () => {
@@ -98,30 +108,85 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
     }
   };
 
-  const captureImage = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  const startPanoramaCapture = () => {
+    setIsPanoramaMode(true);
+    capturedFramesRef.current = [];
+    captureFrame();
+  };
+
+  const stopPanoramaCapture = () => {
+    setIsPanoramaMode(false);
+    if (capturedFramesRef.current.length > 0) {
+      stitchPanorama();
+    }
+  };
+
+  const captureFrame = () => {
+    if (!videoRef.current || !canvasRef.current || !isPanoramaMode) return;
 
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
 
     if (!context) return;
 
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    // Draw the current frame from video to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    capturedFramesRef.current.push(canvas);
 
-    // Convert canvas to file
-    canvas.toBlob((blob) => {
-      if (blob) {
+    // Continue capturing frames
+    if (isPanoramaMode) {
+      requestAnimationFrame(() => {
+        setTimeout(captureFrame, 100); // Capture every 100ms
+      });
+    }
+  };
+
+  const stitchPanorama = () => {
+    if (capturedFramesRef.current.length === 0) return;
+
+    const frames = capturedFramesRef.current;
+    const panoramaCanvas = document.createElement('canvas');
+    const context = panoramaCanvas.getContext('2d');
+
+    if (!context) return;
+
+    // Set panorama dimensions
+    panoramaCanvas.width = frames[0].width * frames.length;
+    panoramaCanvas.height = frames[0].height;
+
+    // Draw frames side by side
+    frames.forEach((frame, index) => {
+      context.drawImage(frame, frame.width * index, 0);
+    });
+
+    // Convert to image for preview
+    const panoramaUrl = panoramaCanvas.toDataURL('image/jpeg', 0.95);
+    setPreviewImage(panoramaUrl);
+    setShowPreview(true);
+  };
+
+  const handleConfirmUpload = () => {
+    if (!previewImage) return;
+
+    // Convert data URL to File
+    fetch(previewImage)
+      .then(res => res.blob())
+      .then(blob => {
         const file = new File([blob], `panorama-${Date.now()}.jpg`, { type: 'image/jpeg' });
         onCapture(file);
         onClose();
-      }
-    }, 'image/jpeg', 0.95);
+      })
+      .catch(error => {
+        console.error('Error creating file:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to process panorama image',
+          status: 'error',
+          duration: 5000,
+        });
+      });
   };
 
   return (
@@ -133,43 +198,71 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
         <ModalBody>
           <VStack spacing={4} align="stretch">
             <Box position="relative" width="100%" height="70vh">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              
-              {/* Orientation Guide */}
-              <Box
-                position="absolute"
-                top="50%"
-                left="50%"
-                transform={`translate(-50%, -50%) rotate(${deviceOrientation}deg)`}
-                width="4px"
-                height="100px"
-                bg="blue.500"
-                opacity={0.7}
-              />
+              {!showPreview ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
+                  
+                  {/* Orientation Guide */}
+                  <Box
+                    position="absolute"
+                    top="50%"
+                    left="50%"
+                    transform={`translate(-50%, -50%) rotate(${deviceOrientation}deg)`}
+                    width="4px"
+                    height="100px"
+                    bg="blue.500"
+                    opacity={0.7}
+                  />
+                </>
+              ) : (
+                <Image src={previewImage || ''} alt="Panorama Preview" objectFit="contain" w="100%" h="100%" />
+              )}
             </Box>
 
             <Text textAlign="center">
-              Slowly rotate your device to capture a panoramic view
+              {!showPreview
+                ? isPanoramaMode
+                  ? 'Slowly rotate your device to capture a panoramic view'
+                  : 'Press Start to begin capturing panorama'
+                : 'Review your panorama'}
             </Text>
 
-            <Button
-              colorScheme="blue"
-              onClick={captureImage}
-              isLoading={isCapturing}
-              mb={4}
-            >
-              Capture Panorama
-            </Button>
+            <HStack spacing={4} justify="center">
+              {!showPreview ? (
+                <>
+                  <Button
+                    colorScheme="blue"
+                    onClick={isPanoramaMode ? stopPanoramaCapture : startPanoramaCapture}
+                    isLoading={isCapturing}
+                  >
+                    {isPanoramaMode ? 'Stop' : 'Start'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button colorScheme="blue" onClick={handleConfirmUpload}>
+                    Upload
+                  </Button>
+                  <Button variant="ghost" onClick={() => {
+                    setShowPreview(false);
+                    setPreviewImage(null);
+                    capturedFramesRef.current = [];
+                  }}>
+                    Retake
+                  </Button>
+                </>
+              )}
+            </HStack>
           </VStack>
         </ModalBody>
       </ModalContent>
