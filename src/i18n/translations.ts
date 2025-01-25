@@ -123,6 +123,9 @@ type TranslationKey =
   | 'collaborate.roles.admin'
   | 'collaborate.status.pending'
   | 'collaborate.status.active'
+  | 'inventory.addImage'
+  | 'inventory.uploadImage'
+  | 'button.close'
   | `custom.${string}`;
 
 type Translations = {
@@ -255,6 +258,9 @@ export const translations: Translations = {
     'collaborate.roles.admin': 'Admin',
     'collaborate.status.pending': 'Pending',
     'collaborate.status.active': 'Active',
+    'inventory.addImage': 'Add Image',
+    'inventory.uploadImage': 'Upload Image',
+    'button.close': 'Close',
   },
   es: {
     'setup.basicInfo': 'Información Básica',
@@ -379,6 +385,9 @@ export const translations: Translations = {
     'collaborate.roles.admin': 'Administrador',
     'collaborate.status.pending': 'Pendiente',
     'collaborate.status.active': 'Activo',
+    'inventory.addImage': 'Agregar Imagen',
+    'inventory.uploadImage': 'Subir Imagen',
+    'button.close': 'Cerrar',
   },
   fr: {
     'setup.basicInfo': 'Informations de Base',
@@ -480,7 +489,7 @@ export const translations: Translations = {
     'collaborate.role': 'Rôle',
     'collaborate.status': 'Statut',
     'collaborate.dateInvited': 'Date d\'Invitation',
-    'collaborate.actions': 'Actions',
+    'collaborate.actions': 'Acciones',
     'collaborate.sendInvite': 'Envoyer l\'Invitation',
     'collaborate.inviteSent': 'Invitation Envoyée',
     'collaborate.inviteDeleted': 'Invitation Supprimée',
@@ -503,6 +512,9 @@ export const translations: Translations = {
     'collaborate.roles.admin': 'Administrateur',
     'collaborate.status.pending': 'En attente',
     'collaborate.status.active': 'Actif',
+    'inventory.addImage': 'Ajouter une Image',
+    'inventory.uploadImage': 'Télécharger une Image',
+    'button.close': 'Fermer',
   },
   de: {
     'setup.basicInfo': 'Grundinformationen',
@@ -627,6 +639,9 @@ export const translations: Translations = {
     'collaborate.roles.admin': 'Administrator',
     'collaborate.status.pending': 'Ausstehend',
     'collaborate.status.active': 'Aktiv',
+    'inventory.addImage': 'Bild Hinzufügen',
+    'inventory.uploadImage': 'Bild Hochladen',
+    'button.close': 'Schließen',
   },
   hi: {
     'setup.basicInfo': 'मूल जानकारी',
@@ -751,5 +766,8 @@ export const translations: Translations = {
     'collaborate.roles.admin': 'व्यवस्थापक',
     'collaborate.status.pending': 'लंबित',
     'collaborate.status.active': 'सक्रिय',
+    'inventory.addImage': 'छवि जोड़ें',
+    'inventory.uploadImage': 'छवि अपलोड करें',
+    'button.close': 'बंद करें',
   },
 }; 
