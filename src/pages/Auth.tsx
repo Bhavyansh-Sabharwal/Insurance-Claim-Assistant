@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,6 +13,10 @@ import {
   Text,
   useToast,
   VStack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,8 +26,10 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationChecks, setVerificationChecks] = useState(0);
   
-  const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, signupWithEmail, loginWithGoogle, checkEmailVerified, sendVerificationEmail } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -34,10 +40,18 @@ const Auth = () => {
     try {
       if (isLogin) {
         await loginWithEmail(email, password);
+        navigate('/setup');
       } else {
         await signupWithEmail(email, password);
+        setShowVerification(true);
+        toast({
+          title: 'Verification Email Sent',
+          description: 'Please check your email to verify your account',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
       }
-      navigate('/setup');
     } catch (error) {
       toast({
         title: 'Error',
@@ -46,9 +60,63 @@ const Auth = () => {
         duration: 5000,
         isClosable: true,
       });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handleResendVerification = async () => {
+    try {
+      await sendVerificationEmail();
+      toast({
+        title: 'Verification Email Sent',
+        description: 'A new verification email has been sent to your address',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send verification email',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const checkVerification = async () => {
+    try {
+      const isVerified = await checkEmailVerified();
+      if (isVerified) {
+        toast({
+          title: 'Email Verified',
+          description: 'Your email has been verified successfully',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        navigate('/setup');
+      } else {
+        setVerificationChecks(prev => prev + 1);
+        toast({
+          title: 'Not Verified',
+          description: 'Please check your email and click the verification link',
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to check verification status',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -65,6 +133,48 @@ const Auth = () => {
       });
     }
   };
+
+  if (showVerification) {
+    return (
+      <Box maxW="md" mx="auto" py={12}>
+        <Card p={8}>
+          <VStack spacing={6}>
+            <Heading size="lg">Verify Your Email</Heading>
+            
+            <Alert status="info">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>Verification Required</AlertTitle>
+                <AlertDescription>
+                  We've sent a verification link to {email}. Please check your email and click the link to verify your account.
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Stack spacing={4} width="100%">
+              <Button
+                colorScheme="blue"
+                onClick={checkVerification}
+                isLoading={loading}
+              >
+                I've Verified My Email
+              </Button>
+
+              {verificationChecks > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={handleResendVerification}
+                  isDisabled={loading}
+                >
+                  Resend Verification Email
+                </Button>
+              )}
+            </Stack>
+          </VStack>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box maxW="md" mx="auto" py={12}>

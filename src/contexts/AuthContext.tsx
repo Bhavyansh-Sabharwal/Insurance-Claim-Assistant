@@ -6,7 +6,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendEmailVerification,
+  reload
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -17,6 +19,8 @@ interface AuthContextType {
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  checkEmailVerified: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -34,7 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const signupWithEmail = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(userCredential.user);
   };
 
   const loginWithEmail = async (email: string, password: string) => {
@@ -48,6 +53,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await signOut(auth);
+  };
+
+  const sendVerificationEmail = async () => {
+    if (!currentUser) throw new Error('No user is currently signed in');
+    await sendEmailVerification(currentUser);
+  };
+
+  const checkEmailVerified = async () => {
+    if (!currentUser) throw new Error('No user is currently signed in');
+    await reload(currentUser); // Refresh the user object
+    return currentUser.emailVerified;
   };
 
   useEffect(() => {
@@ -65,7 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signupWithEmail,
     loginWithEmail,
     loginWithGoogle,
-    logout
+    logout,
+    sendVerificationEmail,
+    checkEmailVerified
   };
 
   return (
