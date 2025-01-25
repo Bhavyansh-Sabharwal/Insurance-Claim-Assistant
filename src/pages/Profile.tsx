@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Box,
   Button,
   FormControl,
   FormLabel,
@@ -19,8 +18,6 @@ import { useLocalization } from '../hooks/useLocalization';
 import { updateUserProfile } from '../services/database';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-
-type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
 interface ProfileData {
   language: Language;

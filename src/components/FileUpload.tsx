@@ -8,6 +8,7 @@ import {
   Progress,
   useToast
 } from '@chakra-ui/react';
+import { DocumentReference } from 'firebase/firestore';
 import { uploadDocument } from '../services/storage';
 
 interface FileUploadProps {
