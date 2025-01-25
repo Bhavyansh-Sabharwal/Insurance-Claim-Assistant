@@ -152,19 +152,26 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
 
     if (!context) return;
 
+    // Calculate total width based on frame width and overlap
+    const frameWidth = frames[0].width;
+    const overlap = Math.floor(frameWidth * 0.2); // 20% overlap between frames
+    const totalWidth = frameWidth + (frameWidth - overlap) * (frames.length - 1);
+
     // Set panorama dimensions
-    panoramaCanvas.width = frames[0].width * frames.length;
+    panoramaCanvas.width = totalWidth;
     panoramaCanvas.height = frames[0].height;
 
-    // Draw frames side by side
+    // Draw frames with overlap
     frames.forEach((frame, index) => {
-      context.drawImage(frame, frame.width * index, 0);
+      const x = index === 0 ? 0 : index * (frameWidth - overlap);
+      context.drawImage(frame, x, 0);
     });
 
-    // Convert to image for preview
-    const panoramaUrl = panoramaCanvas.toDataURL('image/jpeg', 0.95);
+    // Convert to image for preview with better quality
+    const panoramaUrl = panoramaCanvas.toDataURL('image/jpeg', 1.0);
     setPreviewImage(panoramaUrl);
     setShowPreview(true);
+    setIsCapturing(false);
   };
 
   const handleConfirmUpload = () => {
