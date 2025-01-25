@@ -57,7 +57,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         // Transform detected objects for the modal
         const objects = result.detectedObjects.map(obj => ({
           label: obj.label,
-          imageUrl: obj.imageUrl
+          imageUrl: obj.imageUrl,
+          confidence: obj.confidence
         }));
         
         setDetectedObjects(objects);
@@ -157,7 +158,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <DetectedObjectsModal
           isOpen={showDetectedObjects}
           onClose={() => setShowDetectedObjects(false)}
-          detectedObjects={detectedObjects}
+          detectedObjects={detectedObjects.map(obj => ({
+            ...obj,
+            confidence: 1.0 // Adding required confidence property with default value
+          }))}
         />
         
         <PanoramaCapture
