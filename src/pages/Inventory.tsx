@@ -143,10 +143,12 @@ const ItemCard = ({
     <Card 
       p={4} 
       bg={isOver ? hoverBgColor : bgColor}
-      boxShadow="none" 
-      transition="background-color 0.2s ease"
+      boxShadow="md"
+      transition="all 0.2s ease"
+      _hover={{ boxShadow: 'lg' }}
+      minH="140px"
     >
-      <Stack spacing={2}>
+      <Stack spacing={2} height="100%">
         {isEditing ? (
           <EditItemForm
             item={item}
@@ -155,7 +157,7 @@ const ItemCard = ({
             onCancel={onEditCancel}
           />
         ) : (
-          <Flex align="top" gap={2}>
+          <Flex align="top" gap={2} height="100%">
             <SortableHandle />
             <Box flex={1}>
               <ItemDisplay
@@ -265,36 +267,45 @@ const ItemDisplay = ({
 }) => {
   const { t, formatCurrency } = useLocalization();
   return (
-    <>
-      <Flex justify="space-between" align="center">
-        <Heading size="sm" flex={1}>{item.name}</Heading>
-        <Flex gap={2}>
-          <IconButton
-            aria-label={t('button.edit')}
-            icon={<EditIcon />}
-            size="sm"
-            variant="ghost"
-            colorScheme="blue"
-            onClick={onEdit}
-          />
-          <IconButton
-            aria-label={t('button.delete')}
-            icon={<DeleteIcon />}
-            size="sm"
-            variant="ghost"
-            colorScheme="red"
-            onClick={onDelete}
-          />
+    <Stack height="100%" justify="space-between">
+      <Box>
+        <Flex justify="space-between" align="center">
+          <Heading size="sm" flex={1}>{item.name}</Heading>
+          <Flex gap={2}>
+            <IconButton
+              aria-label={t('button.edit')}
+              icon={<EditIcon />}
+              size="sm"
+              variant="ghost"
+              colorScheme="blue"
+              onClick={onEdit}
+            />
+            <IconButton
+              aria-label={t('button.delete')}
+              icon={<DeleteIcon />}
+              size="sm"
+              variant="ghost"
+              colorScheme="red"
+              onClick={onDelete}
+            />
+          </Flex>
         </Flex>
-      </Flex>
-      <Text color="gray.500">{item.description}</Text>
+        <Text 
+          color="gray.500" 
+          minH="24px"
+          wordBreak="break-word"
+          noOfLines={2}
+        >
+          {item.description}
+        </Text>
+      </Box>
       <Flex justify="space-between" align="center">
         <Badge colorScheme="blue">{t(item.category)}</Badge>
         <Text fontWeight="bold">
           {formatCurrency(item.estimatedValue)}
         </Text>
       </Flex>
-    </>
+    </Stack>
   );
 };
 
