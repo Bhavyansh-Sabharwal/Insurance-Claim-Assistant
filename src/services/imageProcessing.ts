@@ -1,12 +1,17 @@
 import { storage, db } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection } from 'firebase/firestore';
-import { getImageDetection } from './objectDetection'; // You'll need to implement this
+import { detectProducts } from './googleVisionAI';
 
 interface DetectedObject {
   label: string;
   confidence: number;
   imageUrl: string;
+  metadata?: {
+    brand?: string;
+    title?: string;
+    gtins?: string[];
+  };
 }
 
 interface ImageUploadResult {
@@ -44,54 +49,29 @@ export const processAndUploadImage = async (
       type: 'main'
     });
 
-    // Run object detection
-    console.log('Starting object detection...');
-    const detectedObjects = await getImageDetection(file);
-    console.log('Detected objects:', detectedObjects);
+    // Run product detection using Google Vision AI
+    console.log('Starting product detection...');
+    const detectedProducts = await detectProducts(file);
+    console.log('Detected products:', detectedProducts);
     
-    // Upload detected object images
-    const uploadedObjects: DetectedObject[] = [];
-    
-    for (let i = 0; i < detectedObjects.length; i++) {
-      const object = detectedObjects[i];
-      try {
-        const objectImageRef = ref(storage, `${folderPath}/object_${i + 1}.${fileExtension}`);
-        
-        // Convert the detected object image to a File/Blob before uploading
-        const response = await fetch(object.imageUrl);
-        const blob = await response.blob();
-        
-        await uploadBytes(objectImageRef, blob);
-        const objectImageUrl = await getDownloadURL(objectImageRef);
-        
-        uploadedObjects.push({
-          label: object.label,
-          confidence: object.confidence,
-          imageUrl: objectImageUrl
-        });
-
-        // Save detected object reference to photos collection
-        await setDoc(doc(collection(db, 'photos')), {
-          userId,
-          itemId,
-          imageUrl: objectImageUrl,
-          folderPath,
-          timestamp: new Date(),
-          type: 'detected',
-          label: object.label,
-          confidence: object.confidence
-        });
-
-        // Cleanup object URL
-        URL.revokeObjectURL(object.imageUrl);
-      } catch (error) {
-        console.error(`Error processing detected object ${i + 1}:`, error);
-      }
+    // Save detected products to Firestore
+    for (const product of detectedProducts) {
+      await setDoc(doc(collection(db, 'photos')), {
+        userId,
+        itemId,
+        imageUrl: product.imageUrl,
+        folderPath,
+        timestamp: new Date(),
+        type: 'detected',
+        label: product.label,
+        confidence: product.confidence,
+        metadata: product.metadata
+      });
     }
 
     return {
       mainImageUrl,
-      detectedObjects: uploadedObjects,
+      detectedObjects: detectedProducts,
       folderPath
     };
   } catch (error) {
