@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ReactPhotoSphereViewer } from 'react-photo-sphere-viewer';
 import {
   Box,
   Button,
@@ -36,6 +37,7 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const capturedFramesRef = useRef<HTMLCanvasElement[]>([]);
+  const sphereContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,8 +63,8 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
       const constraints = {
         video: {
           facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 4096 },
+          height: { ideal: 2048 }
         }
       };
 
@@ -110,43 +112,58 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
 
   const startPanoramaCapture = () => {
     setIsPanoramaMode(true);
+    setIsCapturing(true);
     capturedFramesRef.current = [];
     captureFrame();
   };
 
   const stopPanoramaCapture = () => {
     setIsPanoramaMode(false);
+    setIsCapturing(false);
     if (capturedFramesRef.current.length > 0) {
-      const frames = capturedFramesRef.current;
-      const panoramaCanvas = document.createElement('canvas');
-      const context = panoramaCanvas.getContext('2d');
-
-      if (!context) return;
-
-      // Calculate total width based on frame width and overlap
-      const frameWidth = frames[0].width;
-      const overlap = Math.floor(frameWidth * 0.2); // 20% overlap between frames
-      const totalWidth = frameWidth + (frameWidth - overlap) * (frames.length - 1);
-
-      // Set panorama dimensions
-      panoramaCanvas.width = totalWidth;
-      panoramaCanvas.height = frames[0].height;
-
-      // Draw frames with overlap
-      frames.forEach((frame, index) => {
-        const x = index === 0 ? 0 : index * (frameWidth - overlap);
-        context.drawImage(frame, x, 0);
-      });
-
-      // Convert to blob and create file
-      panoramaCanvas.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], `panorama-${Date.now()}.jpg`, { type: 'image/jpeg' });
-          onCapture(file);
-          onClose();
-        }
-      }, 'image/jpeg', 1.0);
+      createSphericalPanorama();
     }
+  };
+
+  const createSphericalPanorama = () => {
+    if (capturedFramesRef.current.length === 0) return;
+
+    const frames = capturedFramesRef.current;
+    const panoramaCanvas = document.createElement('canvas');
+    const context = panoramaCanvas.getContext('2d');
+
+    if (!context) return;
+
+    // Set dimensions for equirectangular projection (2:1 aspect ratio)
+    panoramaCanvas.width = 4096;
+    panoramaCanvas.height = 2048;
+
+    // Clear the canvas with a black background
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, panoramaCanvas.width, panoramaCanvas.height);
+
+    // Calculate the angle step between frames
+    const angleStep = 360 / frames.length;
+
+    // Draw frames with proper positioning for spherical projection
+    frames.forEach((frame, index) => {
+      const angle = index * angleStep;
+      const x = (angle / 360) * panoramaCanvas.width;
+      
+      // Scale the frame to fit the height
+      const scaleFactor = panoramaCanvas.height / frame.height;
+      const scaledWidth = frame.width * scaleFactor;
+      
+      context.save();
+      context.translate(x, 0);
+      context.drawImage(frame, 0, 0, scaledWidth, panoramaCanvas.height);
+      context.restore();
+    });
+
+    // Convert to image for preview
+    const panoramaUrl = panoramaCanvas.toDataURL('image/jpeg', 1.0);
+    setPreviewImage(panoramaUrl);
+    setShowPreview(true);
   };
 
   const captureFrame = () => {
@@ -169,37 +186,6 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
         setTimeout(captureFrame, 100); // Capture every 100ms
       });
     }
-  };
-
-  const stitchPanorama = () => {
-    if (capturedFramesRef.current.length === 0) return;
-
-    const frames = capturedFramesRef.current;
-    const panoramaCanvas = document.createElement('canvas');
-    const context = panoramaCanvas.getContext('2d');
-
-    if (!context) return;
-
-    // Calculate total width based on frame width and overlap
-    const frameWidth = frames[0].width;
-    const overlap = Math.floor(frameWidth * 0.2); // 20% overlap between frames
-    const totalWidth = frameWidth + (frameWidth - overlap) * (frames.length - 1);
-
-    // Set panorama dimensions
-    panoramaCanvas.width = totalWidth;
-    panoramaCanvas.height = frames[0].height;
-
-    // Draw frames with overlap
-    frames.forEach((frame, index) => {
-      const x = index === 0 ? 0 : index * (frameWidth - overlap);
-      context.drawImage(frame, x, 0);
-    });
-
-    // Convert to image for preview with better quality
-    const panoramaUrl = panoramaCanvas.toDataURL('image/jpeg', 1.0);
-    setPreviewImage(panoramaUrl);
-    setShowPreview(true);
-    setIsCapturing(false);
   };
 
   const handleConfirmUpload = () => {
@@ -228,7 +214,7 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} size="full">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Capture Panorama</ModalHeader>
+        <ModalHeader>Capture 360° Panorama</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <VStack spacing={4} align="stretch">
@@ -260,16 +246,23 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
                   />
                 </>
               ) : (
-                <Image src={previewImage || ''} alt="Panorama Preview" objectFit="contain" w="100%" h="100%" />
+                <div ref={sphereContainerRef} style={{ width: '100%', height: '100%' }}>
+                  <ReactPhotoSphereViewer
+                    src={previewImage || ''}
+                    height="100%"
+                    width="100%"
+                    container={sphereContainerRef.current || undefined}
+                  />
+                </div>
               )}
             </Box>
 
             <Text textAlign="center">
               {!showPreview
                 ? isPanoramaMode
-                  ? 'Slowly rotate your device to capture a panoramic view'
-                  : 'Press Start to begin capturing panorama'
-                : 'Review your panorama'}
+                  ? 'Slowly rotate in a full circle to capture a 360° panorama'
+                  : 'Press Start to begin capturing 360° panorama'
+                : 'Review your 360° panorama'}
             </Text>
 
             <HStack spacing={4} justify="center">
