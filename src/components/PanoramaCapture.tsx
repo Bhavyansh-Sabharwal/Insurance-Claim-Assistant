@@ -117,7 +117,35 @@ export const PanoramaCapture: React.FC<PanoramaCaptureProps> = ({
   const stopPanoramaCapture = () => {
     setIsPanoramaMode(false);
     if (capturedFramesRef.current.length > 0) {
-      stitchPanorama();
+      const frames = capturedFramesRef.current;
+      const panoramaCanvas = document.createElement('canvas');
+      const context = panoramaCanvas.getContext('2d');
+
+      if (!context) return;
+
+      // Calculate total width based on frame width and overlap
+      const frameWidth = frames[0].width;
+      const overlap = Math.floor(frameWidth * 0.2); // 20% overlap between frames
+      const totalWidth = frameWidth + (frameWidth - overlap) * (frames.length - 1);
+
+      // Set panorama dimensions
+      panoramaCanvas.width = totalWidth;
+      panoramaCanvas.height = frames[0].height;
+
+      // Draw frames with overlap
+      frames.forEach((frame, index) => {
+        const x = index === 0 ? 0 : index * (frameWidth - overlap);
+        context.drawImage(frame, x, 0);
+      });
+
+      // Convert to blob and create file
+      panoramaCanvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `panorama-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          onCapture(file);
+          onClose();
+        }
+      }, 'image/jpeg', 1.0);
     }
   };
 
