@@ -7,8 +7,12 @@ import {
   useToast,
   Progress,
   Spinner,
-  Center
+  Center,
+  Button,
+  useBreakpointValue
 } from '@chakra-ui/react';
+import { ViewIcon } from '@chakra-ui/icons';
+import { PanoramaCapture } from './PanoramaCapture';
 import { processAndUploadImage } from '../services/imageProcessing';
 import { DetectedObjectsModal } from './DetectedObjectsModal';
 
@@ -28,6 +32,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
   const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
+  const [showPanoramaCapture, setShowPanoramaCapture] = useState(false);
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
@@ -99,46 +105,67 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <>
-      <Box
-        {...getRootProps()}
-        p={6}
-        border="2px dashed"
-        borderColor={isDragActive ? 'blue.400' : 'gray.200'}
-        borderRadius="md"
-        cursor={isUploading ? 'not-allowed' : 'pointer'}
-        opacity={isUploading ? 0.6 : 1}
-        position="relative"
-      >
-        <input {...getInputProps()} disabled={isUploading} />
-        <VStack spacing={2}>
-          {isUploading ? (
-            <Center p={4}>
-              <VStack spacing={4}>
-                <Spinner size="xl" />
-                <Text>{uploadProgress}</Text>
-                <Progress size="xs" width="100%" isIndeterminate />
-              </VStack>
-            </Center>
-          ) : (
-            <>
-              <Text>
-                {isDragActive
-                  ? 'Drop the image here'
-                  : 'Drag and drop an image here, or click to select'}
-              </Text>
-              <Text fontSize="sm" color="gray.500">
-                Supports images (JPG, PNG)
-              </Text>
-            </>
-          )}
-        </VStack>
-      </Box>
+      <VStack spacing={4} width="100%">
+        {isMobile && (
+          <Button
+            leftIcon={<ViewIcon />}
+            colorScheme="blue"
+            width="100%"
+            onClick={() => setShowPanoramaCapture(true)}
+            isDisabled={isUploading}
+          >
+            Capture Panorama
+          </Button>
+        )}
+        
+        <Box
+          {...getRootProps()}
+          p={6}
+          border="2px dashed"
+          borderColor={isDragActive ? 'blue.400' : 'gray.200'}
+          borderRadius="md"
+          cursor={isUploading ? 'not-allowed' : 'pointer'}
+          opacity={isUploading ? 0.6 : 1}
+          position="relative"
+          width="100%"
+        >
+          <input {...getInputProps()} disabled={isUploading} />
+          <VStack spacing={2}>
+            {isUploading ? (
+              <Center p={4}>
+                <VStack spacing={4}>
+                  <Spinner size="xl" />
+                  <Text>{uploadProgress}</Text>
+                  <Progress size="xs" width="100%" isIndeterminate />
+                </VStack>
+              </Center>
+            ) : (
+              <>
+                <Text>
+                  {isDragActive
+                    ? 'Drop the image here'
+                    : 'Drag and drop an image here, or click to select'}
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  Supports images (JPG, PNG)
+                </Text>
+              </>
+            )}
+          </VStack>
+        </Box>
 
-      <DetectedObjectsModal
-        isOpen={showDetectedObjects}
-        onClose={() => setShowDetectedObjects(false)}
-        detectedObjects={detectedObjects}
-      />
+        <DetectedObjectsModal
+          isOpen={showDetectedObjects}
+          onClose={() => setShowDetectedObjects(false)}
+          detectedObjects={detectedObjects}
+        />
+        
+        <PanoramaCapture
+          isOpen={showPanoramaCapture}
+          onClose={() => setShowPanoramaCapture(false)}
+          onCapture={(file) => onDrop([file])}
+        />
+      </VStack>
     </>
   );
-}; 
+};
