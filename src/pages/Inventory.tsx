@@ -726,13 +726,6 @@ const Inventory = () => {
                   </Heading>
                   <Flex gap={2}>
                     <Button
-                      leftIcon={<DownloadIcon />}
-                      colorScheme="green"
-                      onClick={handleDownloadPDF}
-                    >
-                      {t('inventory.downloadPDF')}
-                    </Button>
-                    <Button
                       leftIcon={<AttachmentIcon />}
                       colorScheme="teal"
                       onClick={onImageUploadOpen}
@@ -808,6 +801,17 @@ const Inventory = () => {
                 <Text color="gray.500">{t('inventory.selectRoom')}</Text>
               </Box>
             )}
+            {/* Add PDF download button below the grid */}
+            <Flex justify="center" mt={8}>
+              <Button
+                leftIcon={<DownloadIcon />}
+                colorScheme="green"
+                onClick={handleDownloadPDF}
+                isDisabled={rooms.length === 0}
+              >
+                {t('inventory.downloadPDF')}
+              </Button>
+            </Flex>
           </Box>
         </Grid>
 
