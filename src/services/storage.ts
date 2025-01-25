@@ -1,6 +1,6 @@
 import { storage, db } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { DocumentReference } from '../types/models';
 
 export const uploadDocument = async (
@@ -39,7 +39,6 @@ export const uploadDocument = async (
 };
 
 export const deleteDocument = async (
-  userId: string,
   itemId: string,
   documentId: string
 ): Promise<void> => {

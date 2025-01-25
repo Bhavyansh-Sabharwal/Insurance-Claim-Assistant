@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Box,
   Button,
   FormControl,
   FormLabel,
@@ -20,8 +19,6 @@ import { updateUserProfile } from '../services/database';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
-type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
-
 interface ProfileData {
   language: Language;
   currency: Currency;
@@ -32,7 +29,7 @@ interface ProfileData {
 
 const Profile = () => {
   const { currentUser } = useAuth();
-  const { preferences, updatePreferences, setPreferencesImmediately } = usePreferences();
+  const { preferences, setPreferencesImmediately } = usePreferences();
   const { t } = useLocalization();
   const toast = useToast();
   const [loading, setLoading] = useState(true);

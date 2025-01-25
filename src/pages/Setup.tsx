@@ -23,7 +23,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences, Language, Currency } from '../contexts/PreferencesContext';
 import { useLocalization } from '../hooks/useLocalization';
 import { updateUserProfile } from '../services/database';
-import { useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -67,11 +66,10 @@ interface FormData {
 
 const Setup = () => {
   const { currentUser } = useAuth();
-  const { updatePreferences, setPreferencesImmediately } = usePreferences();
+  const { setPreferencesImmediately } = usePreferences();
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
   const toast = useToast();
-  const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     language: 'en',
