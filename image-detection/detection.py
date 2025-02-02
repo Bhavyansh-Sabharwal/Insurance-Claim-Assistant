@@ -5,41 +5,56 @@ import os
 import cv2
 import numpy as np
 from pathlib import Path
+import time
+import base64
 
 # Load environment variables for API configuration
 load_dotenv()
 
-def detect_and_crop_objects(blob):
-    """Detect objects in an image and crop them into individual images.
+def detect_and_crop_objects(input_data):
+    """Detect objects in an image and return cropped objects as base64 encoded images.
     
     This function:
-    1. Converts the input blob to an OpenCV image
+    1. Handles both local files and remote URLs
     2. Uses Eden AI's object detection API to identify objects
     3. Crops detected objects from the original image
-    4. Saves individual object images
+    4. Returns detected objects with base64 encoded images
     
     Args:
-        blob (bytes): Binary image data to process
+        input_data (Union[str, bytes]): Image URL, file path, or binary data
         
     Returns:
-        Path: Directory containing cropped object images
+        list: List of dictionaries containing object label, confidence, and base64 image
     """
-    # Convert binary blob to OpenCV image format
-    nparr = np.frombuffer(blob, np.uint8)
+    # Handle input data
+    if isinstance(input_data, str):
+        # Read local file
+        with open(input_data, 'rb') as f:
+            image_data = f.read()
+    else:
+        # Use provided binary data
+        image_data = input_data
+    
+    # Convert to OpenCV format
+    nparr = np.frombuffer(image_data, np.uint8)
     image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if image is None:
+        raise Exception('Failed to decode image')
+    
     height, width = image.shape[:2]
     
     # Configure Eden AI API request
     API_KEY = os.getenv('EDEN_API')
     url = 'https://api.edenai.run/v2/image/object_detection'
     data = {'providers': 'api4ai'}
-    files = {'file': open(image_path, 'rb')}
+    files = {'file': ('image.jpg', image_data, 'image/jpeg')}
     
     # Send request to Eden AI for object detection
     response = requests.post(url, data=data, files=files, headers={'Authorization': f'Bearer {API_KEY}'})
     results = json.loads(response.text)['api4ai']['items']
     
     # Process each detected object
+    detected_objects = []
     for idx, obj in enumerate(results):
         # Calculate object bounding box coordinates
         x_min = int(obj['x_min'] * width)
@@ -50,11 +65,15 @@ def detect_and_crop_objects(blob):
         # Crop the object from the original image
         cropped = image[y_min:y_max, x_min:x_max]
         
-        # Save the cropped object image
-        output_path = output_dir / f"{obj['label']}_{idx}.jpg"
-        cv2.imwrite(str(output_path), cropped)
-        print(f"Saved {output_path}")
-
-# Example usage with a local image file
-image_path = '/Users/aravdhoot/Downloads/bedroom.jpg'
-detect_and_crop_objects(image_path)
+        # Convert cropped image to base64
+        _, buffer = cv2.imencode('.jpg', cropped)
+        base64_image = base64.b64encode(buffer).decode('utf-8')
+        
+        # Add object to results
+        detected_objects.append({
+            'label': obj['label'],
+            'confidence': obj.get('confidence', 1.0),
+            'image_data': f'data:image/jpeg;base64,{base64_image}'
+        })
+    
+    return detected_objects
