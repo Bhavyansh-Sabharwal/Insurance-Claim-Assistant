@@ -20,56 +20,62 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences, Language, Currency } from '../contexts/PreferencesContext';
+import { useLocalization } from '../hooks/useLocalization';
 import { updateUserProfile } from '../services/database';
 import { useNavigate } from 'react-router-dom';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
+
 type Step = {
-  title: string;
+  title: TranslationKey;
   description: string;
 };
 
 const steps: Step[] = [
   {
-    title: 'Basic Information',
+    title: 'setup.basicInfo',
     description: 'Set your language and currency preferences',
   },
   {
-    title: 'Room Setup',
+    title: 'setup.roomSetup',
     description: 'Tell us about the rooms in your property',
   },
 ];
 
-const suggestedRooms = [
-  'Living Room',
-  'Master Bedroom',
-  'Kitchen',
-  'Bathroom',
-  'Dining Room',
-  'Office',
-  'Guest Bedroom',
-  'Garage',
+const suggestedRooms: TranslationKey[] = [
+  'common.livingRoom',
+  'common.masterBedroom',
+  'common.kitchen',
+  'common.bathroom',
+  'common.diningRoom',
+  'common.office',
+  'common.guestBedroom',
+  'common.garage',
 ];
 
 interface FormData {
-  language: string;
-  currency: string;
+  language: Language;
+  currency: Currency;
   propertyType: string;
   address: string;
-  rooms: { name: string; selected: boolean }[];
+  rooms: { name: TranslationKey; selected: boolean }[];
   customRooms: string[];
 }
 
 const Setup = () => {
   const { currentUser } = useAuth();
+  const { updatePreferences, setPreferencesImmediately } = usePreferences();
+  const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
   const toast = useToast();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
-    language: '',
-    currency: '',
+    language: 'en',
+    currency: 'USD',
     propertyType: '',
     address: '',
     rooms: suggestedRooms.map(room => ({ name: room, selected: false })),
@@ -83,6 +89,11 @@ const Setup = () => {
       ...prev,
       [field]: value
     }));
+
+    // Immediately update language and currency preferences
+    if (field === 'language' || field === 'currency') {
+      setPreferencesImmediately({ [field]: value });
+    }
   };
 
   const handleRoomToggle = (index: number) => {
@@ -160,7 +171,7 @@ const Setup = () => {
       console.error('Setup error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to complete setup. Please try again.',
+        description: t('error.setupFailed'),
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -174,23 +185,25 @@ const Setup = () => {
         return (
           <Stack spacing={4}>
             <FormControl isRequired>
-              <FormLabel>Preferred Language</FormLabel>
+              <FormLabel>{t('setup.language')}</FormLabel>
               <Select
                 value={formData.language}
-                onChange={(e) => handleInputChange('language', e.target.value)}
-                placeholder="Select language"
+                onChange={(e) => handleInputChange('language', e.target.value as Language)}
+                placeholder={t('placeholder.selectLanguage')}
               >
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="hi">हिन्दी</option>
               </Select>
             </FormControl>
             <FormControl isRequired>
-              <FormLabel>Preferred Currency</FormLabel>
+              <FormLabel>{t('setup.currency')}</FormLabel>
               <Select
                 value={formData.currency}
-                onChange={(e) => handleInputChange('currency', e.target.value)}
-                placeholder="Select currency"
+                onChange={(e) => handleInputChange('currency', e.target.value as Currency)}
+                placeholder={t('placeholder.selectCurrency')}
               >
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -198,23 +211,23 @@ const Setup = () => {
               </Select>
             </FormControl>
             <FormControl isRequired>
-              <FormLabel>Property Type</FormLabel>
+              <FormLabel>{t('setup.propertyType')}</FormLabel>
               <Select
                 value={formData.propertyType}
                 onChange={(e) => handleInputChange('propertyType', e.target.value)}
-                placeholder="Select property type"
+                placeholder={t('placeholder.selectPropertyType')}
               >
-                <option value="house">House</option>
-                <option value="apartment">Apartment</option>
-                <option value="condo">Condominium</option>
+                <option value="house">{t('common.house')}</option>
+                <option value="apartment">{t('common.apartment')}</option>
+                <option value="condo">{t('common.condo')}</option>
               </Select>
             </FormControl>
             <FormControl isRequired>
-              <FormLabel>Property Address</FormLabel>
+              <FormLabel>{t('setup.address')}</FormLabel>
               <Input
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Enter your address"
+                placeholder={t('placeholder.enterAddress')}
               />
             </FormControl>
           </Stack>
@@ -223,7 +236,7 @@ const Setup = () => {
         return (
           <Stack spacing={6}>
             <Box>
-              <Text mb={4} fontWeight="medium">Select from suggested rooms:</Text>
+              <Text mb={4} fontWeight="medium">{t('text.suggestedRooms')}</Text>
               <VStack align="stretch" spacing={2}>
                 {formData.rooms.map((room, index) => (
                   <Checkbox
@@ -231,19 +244,19 @@ const Setup = () => {
                     isChecked={room.selected}
                     onChange={() => handleRoomToggle(index)}
                   >
-                    {room.name}
+                    {t(room.name)}
                   </Checkbox>
                 ))}
               </VStack>
             </Box>
 
             <Box>
-              <Text mb={4} fontWeight="medium">Add custom rooms:</Text>
+              <Text mb={4} fontWeight="medium">{t('text.customRooms')}</Text>
               <HStack mb={4}>
                 <Input
                   value={newCustomRoom}
                   onChange={(e) => setNewCustomRoom(e.target.value)}
-                  placeholder="Enter room name"
+                  placeholder={t('placeholder.enterRoomName')}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       handleAddCustomRoom();
@@ -251,7 +264,7 @@ const Setup = () => {
                   }}
                 />
                 <IconButton
-                  aria-label="Add room"
+                  aria-label={t('button.addRoom')}
                   icon={<AddIcon />}
                   onClick={handleAddCustomRoom}
                 />
@@ -261,7 +274,7 @@ const Setup = () => {
                   <HStack key={index} justify="space-between">
                     <Text>{room}</Text>
                     <IconButton
-                      aria-label="Remove room"
+                      aria-label={t('button.removeRoom')}
                       icon={<DeleteIcon />}
                       size="sm"
                       variant="ghost"
@@ -286,7 +299,7 @@ const Setup = () => {
       <Card p={6} bg={useColorModeValue('white', 'gray.700')} shadow="md">
         <Stack spacing={6}>
           <Box>
-            <Heading size="lg">{steps[currentStep].title}</Heading>
+            <Heading size="lg">{t(steps[currentStep].title)}</Heading>
             <Text color={useColorModeValue('gray.600', 'gray.300')} mt={2}>
               {steps[currentStep].description}
             </Text>
@@ -297,14 +310,14 @@ const Setup = () => {
           <Stack direction="row" spacing={4} justify="flex-end">
             {currentStep > 0 && (
               <Button onClick={handlePrevious} variant="outline">
-                Previous
+                {t('setup.previous')}
               </Button>
             )}
             <Button
               onClick={currentStep === steps.length - 1 ? handleComplete : handleNext}
               colorScheme="blue"
             >
-              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Next'}
+              {currentStep === steps.length - 1 ? t('setup.complete') : t('setup.next')}
             </Button>
           </Stack>
         </Stack>

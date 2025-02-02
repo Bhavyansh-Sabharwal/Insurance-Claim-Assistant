@@ -14,13 +14,17 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { useAuth } from '../contexts/AuthContext';
+import { usePreferences, Language, Currency } from '../contexts/PreferencesContext';
+import { useLocalization } from '../hooks/useLocalization';
 import { updateUserProfile } from '../services/database';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
+type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
+
 interface ProfileData {
-  language: string;
-  currency: string;
+  language: Language;
+  currency: Currency;
   propertyType: string;
   address: string;
   rooms: number;
@@ -28,17 +32,28 @@ interface ProfileData {
 
 const Profile = () => {
   const { currentUser } = useAuth();
+  const { preferences, updatePreferences, setPreferencesImmediately } = usePreferences();
+  const { t } = useLocalization();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState<ProfileData>({
-    language: '',
-    currency: '',
+    language: preferences.language,
+    currency: preferences.currency,
     propertyType: '',
     address: '',
     rooms: 0,
   });
+
+  // Add effect to sync with preferences
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      language: preferences.language,
+      currency: preferences.currency,
+    }));
+  }, [preferences]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -48,18 +63,19 @@ const Profile = () => {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          setFormData({
-            language: data.preferences?.language || '',
-            currency: data.preferences?.currency || '',
+          setFormData(prev => ({
+            ...prev,
+            language: preferences.language,
+            currency: preferences.currency,
             propertyType: data.propertyDetails?.type || '',
             address: data.propertyDetails?.address || '',
             rooms: data.propertyDetails?.rooms || 0,
-          });
+          }));
         }
       } catch (error) {
         toast({
           title: 'Error',
-          description: 'Failed to load profile',
+          description: t('error.profileLoadFailed'),
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -70,13 +86,18 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [currentUser, toast]);
+  }, [currentUser, preferences, toast, t]);
 
-  const handleInputChange = (field: keyof ProfileData, value: string) => {
+  const handleInputChange = (field: keyof ProfileData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Immediately update language and currency preferences
+    if (field === 'language' || field === 'currency') {
+      setPreferencesImmediately({ [field]: value });
+    }
   };
 
   const handleSave = async () => {
@@ -98,7 +119,7 @@ const Profile = () => {
       
       toast({
         title: 'Success',
-        description: 'Profile updated successfully',
+        description: t('success.profileUpdated'),
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -106,7 +127,7 @@ const Profile = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update profile',
+        description: t('error.profileUpdateFailed'),
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -124,28 +145,30 @@ const Profile = () => {
     <Container maxW="container.md" py={8}>
       <Card p={6} bg={useColorModeValue('white', 'gray.700')} shadow="md">
         <Stack spacing={6}>
-          <Heading size="lg">Profile Settings</Heading>
+          <Heading size="lg">{t('profile.title')}</Heading>
 
           <Stack spacing={4}>
             <FormControl>
-              <FormLabel>Preferred Language</FormLabel>
+              <FormLabel>{t('setup.language')}</FormLabel>
               <Select
                 value={formData.language}
-                onChange={(e) => handleInputChange('language', e.target.value)}
-                placeholder="Select language"
+                onChange={(e) => handleInputChange('language', e.target.value as Language)}
+                placeholder={t('placeholder.selectLanguage')}
               >
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="hi">हिन्दी</option>
               </Select>
             </FormControl>
 
             <FormControl>
-              <FormLabel>Preferred Currency</FormLabel>
+              <FormLabel>{t('setup.currency')}</FormLabel>
               <Select
                 value={formData.currency}
-                onChange={(e) => handleInputChange('currency', e.target.value)}
-                placeholder="Select currency"
+                onChange={(e) => handleInputChange('currency', e.target.value as Currency)}
+                placeholder={t('placeholder.selectCurrency')}
               >
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -154,24 +177,24 @@ const Profile = () => {
             </FormControl>
 
             <FormControl>
-              <FormLabel>Property Type</FormLabel>
+              <FormLabel>{t('setup.propertyType')}</FormLabel>
               <Select
                 value={formData.propertyType}
                 onChange={(e) => handleInputChange('propertyType', e.target.value)}
-                placeholder="Select property type"
+                placeholder={t('placeholder.selectPropertyType')}
               >
-                <option value="house">House</option>
-                <option value="apartment">Apartment</option>
-                <option value="condo">Condominium</option>
+                <option value="house">{t('common.house')}</option>
+                <option value="apartment">{t('common.apartment')}</option>
+                <option value="condo">{t('common.condo')}</option>
               </Select>
             </FormControl>
 
             <FormControl>
-              <FormLabel>Property Address</FormLabel>
+              <FormLabel>{t('setup.address')}</FormLabel>
               <Input
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="Enter your address"
+                placeholder={t('placeholder.enterAddress')}
               />
             </FormControl>
 
@@ -179,9 +202,8 @@ const Profile = () => {
               colorScheme="blue"
               onClick={handleSave}
               isLoading={saving}
-              alignSelf="flex-end"
             >
-              Save Changes
+              {t('profile.save')}
             </Button>
           </Stack>
         </Stack>

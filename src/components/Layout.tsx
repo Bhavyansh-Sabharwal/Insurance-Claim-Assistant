@@ -14,6 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocalization } from '../hooks/useLocalization';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -24,6 +25,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { currentUser, logout } = useAuth();
+  const { t } = useLocalization();
   const navigate = useNavigate();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -76,21 +78,22 @@ const Layout = ({ children }: LayoutProps) => {
           {currentUser ? (
             <>
               {!setupCompleted ? (
-                <Link as={RouterLink} to="/setup">Setup</Link>
+                <Link as={RouterLink} to="/setup">{t('header.setup')}</Link>
               ) : (
                 <>
-                  <Link as={RouterLink} to="/inventory">Inventory</Link>
-                  <Link as={RouterLink} to="/documents">Documents</Link>
-                  <Link as={RouterLink} to="/collaborate">Collaborate</Link>
+                  <Link as={RouterLink} to="/">{t('header.home')}</Link>
+                  <Link as={RouterLink} to="/inventory">{t('header.inventory')}</Link>
+                  <Link as={RouterLink} to="/documents">{t('header.documents')}</Link>
+                  <Link as={RouterLink} to="/collaborate">{t('header.collaborate')}</Link>
                   <Menu>
                     <MenuButton as={Button} variant="ghost">
                       {currentUser.email}
                     </MenuButton>
                     <MenuList>
                       <MenuItem as={RouterLink} to="/profile">
-                        Profile Settings
+                        {t('header.profile')}
                       </MenuItem>
-                      <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
+                      <MenuItem onClick={handleLogout}>{t('header.signOut')}</MenuItem>
                     </MenuList>
                   </Menu>
                 </>
@@ -98,7 +101,7 @@ const Layout = ({ children }: LayoutProps) => {
             </>
           ) : (
             <Button as={RouterLink} to="/auth">
-              Sign In
+              {t('button.signIn')}
             </Button>
           )}
         </Flex>

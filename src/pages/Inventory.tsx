@@ -57,6 +57,10 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableItem } from '../components/SortableItem';
 import SortableHandle from '../components/SortableHandle';
+import { useLocalization } from '../hooks/useLocalization';
+import { Language } from '../contexts/PreferencesContext';
+
+type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
 // Types
 type Item = {
@@ -65,33 +69,42 @@ type Item = {
   description: string;
   estimatedValue: number;
   room: string;
-  category: string;
+  category: TranslationKey;
 };
 
 type Room = {
   id: string;
-  name: string;
+  name: TranslationKey;
   items: Item[];
   userId: string;
   orderIndex: number;
 };
 
 // Constants
-const categories = [
-  'Furniture',
-  'Electronics',
-  'Appliances',
-  'Clothing',
-  'Decor',
-  'Other',
+const categories: TranslationKey[] = [
+  'inventory.categories.furniture',
+  'inventory.categories.electronics',
+  'inventory.categories.appliances',
+  'inventory.categories.clothing',
+  'inventory.categories.decor',
+  'inventory.categories.other',
 ];
 
-const createDefaultRooms = (userId: string): Room[] => [
-  { id: '1', name: 'Living Room', items: [], userId, orderIndex: 0 },
-  { id: '2', name: 'Kitchen', items: [], userId, orderIndex: 1 },
-  { id: '3', name: 'Bedroom', items: [], userId, orderIndex: 2 },
-  { id: '4', name: 'Bathroom', items: [], userId, orderIndex: 3 },
+const defaultRooms: TranslationKey[] = [
+  'common.livingRoom',
+  'common.kitchen',
+  'common.masterBedroom',
+  'common.bathroom',
 ];
+
+const createDefaultRooms = (userId: string): Room[] => 
+  defaultRooms.map((name, index) => ({
+    id: (index + 1).toString(),
+    name,
+    items: [],
+    userId,
+    orderIndex: index,
+  }));
 
 // Helper Functions
 const updateFirestore = async (path: string, data: any) => {
@@ -119,6 +132,7 @@ const ItemCard = ({
   onEditCancel: () => void;
   isOver: boolean;
 }) => {
+  const { t } = useLocalization();
   const bgColor = useColorModeValue('white', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
 
@@ -164,40 +178,43 @@ const EditItemForm = ({
   editData: Partial<Item>;
   onSubmit: () => void;
   onCancel: () => void;
-}) => (
-  <Stack spacing={2} width="100%">
-    <Input
-      value={editData.name || item.name}
-      onChange={(e) => editData.name = e.target.value}
-      placeholder="Item name"
-    />
-    <Input
-      value={editData.description || item.description}
-      onChange={(e) => editData.description = e.target.value}
-      placeholder="Description"
-    />
-    <Select
-      value={editData.category || item.category}
-      onChange={(e) => editData.category = e.target.value}
-    >
-      {categories.map(category => (
-        <option key={category} value={category}>
-          {category}
-        </option>
-      ))}
-    </Select>
-    <Input
-      type="number"
-      value={editData.estimatedValue || item.estimatedValue}
-      onChange={(e) => editData.estimatedValue = Number(e.target.value)}
-      placeholder="Estimated value"
-    />
-    <Flex gap={2} justify="flex-end">
-      <Button size="sm" onClick={onCancel}>Cancel</Button>
-      <Button size="sm" colorScheme="blue" onClick={onSubmit}>Save</Button>
-    </Flex>
-  </Stack>
-);
+}) => {
+  const { t } = useLocalization();
+  return (
+    <Stack spacing={2} width="100%">
+      <Input
+        value={editData.name || item.name}
+        onChange={(e) => editData.name = e.target.value}
+        placeholder={t('inventory.itemName')}
+      />
+      <Input
+        value={editData.description || item.description}
+        onChange={(e) => editData.description = e.target.value}
+        placeholder={t('inventory.description')}
+      />
+      <Select
+        value={editData.category || item.category}
+        onChange={(e) => editData.category = e.target.value as TranslationKey}
+      >
+        {categories.map(category => (
+          <option key={category} value={category}>
+            {t(category)}
+          </option>
+        ))}
+      </Select>
+      <Input
+        type="number"
+        value={editData.estimatedValue || item.estimatedValue}
+        onChange={(e) => editData.estimatedValue = Number(e.target.value)}
+        placeholder={t('inventory.estimatedValue')}
+      />
+      <Flex gap={2} justify="flex-end">
+        <Button size="sm" onClick={onCancel}>{t('button.cancel')}</Button>
+        <Button size="sm" colorScheme="blue" onClick={onSubmit}>{t('button.save')}</Button>
+      </Flex>
+    </Stack>
+  );
+};
 
 const ItemDisplay = ({ 
   item, 
@@ -207,38 +224,41 @@ const ItemDisplay = ({
   item: Item;
   onEdit: () => void;
   onDelete: () => void;
-}) => (
-  <>
-    <Flex justify="space-between" align="center">
-      <Heading size="sm" flex={1}>{item.name}</Heading>
-      <Flex gap={2}>
-        <IconButton
-          aria-label="Edit item"
-          icon={<EditIcon />}
-          size="sm"
-          variant="ghost"
-          colorScheme="blue"
-          onClick={onEdit}
-        />
-        <IconButton
-          aria-label="Delete item"
-          icon={<DeleteIcon />}
-          size="sm"
-          variant="ghost"
-          colorScheme="red"
-          onClick={onDelete}
-        />
+}) => {
+  const { t, formatCurrency } = useLocalization();
+  return (
+    <>
+      <Flex justify="space-between" align="center">
+        <Heading size="sm" flex={1}>{item.name}</Heading>
+        <Flex gap={2}>
+          <IconButton
+            aria-label={t('button.edit')}
+            icon={<EditIcon />}
+            size="sm"
+            variant="ghost"
+            colorScheme="blue"
+            onClick={onEdit}
+          />
+          <IconButton
+            aria-label={t('button.delete')}
+            icon={<DeleteIcon />}
+            size="sm"
+            variant="ghost"
+            colorScheme="red"
+            onClick={onDelete}
+          />
+        </Flex>
       </Flex>
-    </Flex>
-    <Text color="gray.500">{item.description}</Text>
-    <Flex justify="space-between" align="center">
-      <Badge colorScheme="blue">{item.category}</Badge>
-      <Text fontWeight="bold">
-        ${item.estimatedValue.toLocaleString()}
-      </Text>
-    </Flex>
-  </>
-);
+      <Text color="gray.500">{item.description}</Text>
+      <Flex justify="space-between" align="center">
+        <Badge colorScheme="blue">{t(item.category)}</Badge>
+        <Text fontWeight="bold">
+          {formatCurrency(item.estimatedValue)}
+        </Text>
+      </Flex>
+    </>
+  );
+};
 
 const AddItemModal = ({
   isOpen,
@@ -252,61 +272,65 @@ const AddItemModal = ({
   onSubmit: () => void;
   newItem: Partial<Item>;
   setNewItem: (item: Partial<Item>) => void;
-}) => (
-  <Modal isOpen={isOpen} onClose={onClose}>
-    <ModalOverlay />
-    <ModalContent>
-      <ModalHeader>Add New Item</ModalHeader>
-      <ModalBody>
-        <Stack spacing={4}>
-          <FormControl isRequired>
-            <FormLabel>Item Name</FormLabel>
-            <Input
-              value={newItem.name || ''}
-              onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Description</FormLabel>
-            <Input
-              value={newItem.description || ''}
-              onChange={e => setNewItem({ ...newItem, description: e.target.value })}
-            />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Category</FormLabel>
-            <Select
-              value={newItem.category || categories[0]}
-              onChange={e => setNewItem({ ...newItem, category: e.target.value })}
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl>
-            <FormLabel>Estimated Value ($)</FormLabel>
-            <Input
-              type="number"
-              value={newItem.estimatedValue || ''}
-              onChange={e => setNewItem({ ...newItem, estimatedValue: Number(e.target.value) })}
-            />
-          </FormControl>
-        </Stack>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant="ghost" mr={3} onClick={onClose}>Cancel</Button>
-        <Button colorScheme="blue" onClick={onSubmit}>Add Item</Button>
-      </ModalFooter>
-    </ModalContent>
-  </Modal>
-);
+}) => {
+  const { t } = useLocalization();
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>{t('inventory.addItem')}</ModalHeader>
+        <ModalBody>
+          <Stack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>{t('inventory.itemName')}</FormLabel>
+              <Input
+                value={newItem.name || ''}
+                onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>{t('inventory.description')}</FormLabel>
+              <Input
+                value={newItem.description || ''}
+                onChange={e => setNewItem({ ...newItem, description: e.target.value })}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>{t('inventory.category')}</FormLabel>
+              <Select
+                value={newItem.category || categories[0]}
+                onChange={e => setNewItem({ ...newItem, category: e.target.value as TranslationKey })}
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {t(category)}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel>{t('inventory.estimatedValue')}</FormLabel>
+              <Input
+                type="number"
+                value={newItem.estimatedValue || ''}
+                onChange={e => setNewItem({ ...newItem, estimatedValue: Number(e.target.value) })}
+              />
+            </FormControl>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={onClose}>{t('button.cancel')}</Button>
+          <Button colorScheme="blue" onClick={onSubmit}>{t('button.save')}</Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
 
 // Main Component
 const Inventory = () => {
   const { currentUser } = useAuth();
+  const { t, formatCurrency } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -439,9 +463,10 @@ const Inventory = () => {
 
     try {
       const roomRef = doc(collection(db, 'rooms'));
+      const newRoomName = `custom.${t('inventory.newRoom')} ${rooms.length + 1}` as TranslationKey;
       const newRoom: Room = {
         id: roomRef.id,
-        name: `New Room ${rooms.length + 1}`,
+        name: newRoomName,
         items: [],
         userId: currentUser.uid,
         orderIndex: rooms.length,
@@ -449,9 +474,9 @@ const Inventory = () => {
 
       await setDoc(roomRef, newRoom);
       setRooms([...rooms, newRoom]);
-      toast({ title: 'Room added', status: 'success', duration: 2000 });
+      toast({ title: t('inventory.addRoom'), status: 'success', duration: 2000 });
     } catch (error) {
-      toast({ title: 'Error adding room', status: 'error', duration: 5000 });
+      toast({ title: 'Error', description: t('error.addRoomFailed'), status: 'error', duration: 5000 });
     }
   };
 
@@ -459,7 +484,7 @@ const Inventory = () => {
     const room = rooms.find(r => r.id === roomId);
     if (!room) return;
 
-    if (room.items.length > 0 && !window.confirm('Delete room and all its items?')) {
+    if (room.items.length > 0 && !window.confirm(t('inventory.deleteRoomConfirm'))) {
       return;
     }
 
@@ -485,6 +510,28 @@ const Inventory = () => {
     }
   };
 
+  const handleEditRoomName = async (roomId: string, newName: string) => {
+    if (!newName.trim()) return;
+
+    const updatedRooms = rooms.map(room =>
+      room.id === roomId ? { ...room, name: `custom.${newName}` as TranslationKey } : room
+    );
+
+    try {
+      await updateFirestore(`rooms/${roomId}`, { name: `custom.${newName}` });
+      setRooms(updatedRooms);
+      setIsEditingRoom(null);
+      setEditRoomName('');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update room name',
+        status: 'error',
+        duration: 5000,
+      });
+    }
+  };
+
   return (
     <DndContext 
       sensors={sensors} 
@@ -498,9 +545,9 @@ const Inventory = () => {
           {/* Rooms Sidebar */}
           <Stack spacing={4}>
             <Flex justify="space-between" align="center">
-              <Heading size="md">Rooms</Heading>
+              <Heading size="md">{t('inventory.rooms')}</Heading>
               <IconButton
-                aria-label="Add room"
+                aria-label={t('inventory.addRoom')}
                 icon={<AddIcon />}
                 size="sm"
                 colorScheme="blue"
@@ -526,29 +573,14 @@ const Inventory = () => {
                             onChange={(e) => setEditRoomName(e.target.value)}
                             onBlur={() => {
                               if (editRoomName.trim()) {
-                                updateFirestore(`rooms/${room.id}`, { name: editRoomName })
-                                  .then(() => {
-                                    setRooms(rooms.map(r =>
-                                      r.id === room.id ? { ...r, name: editRoomName } : r
-                                    ));
-                                    setIsEditingRoom(null);
-                                    setEditRoomName('');
-                                  });
+                                handleEditRoomName(room.id, editRoomName);
                               }
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                e.preventDefault(); // Prevent default behavior for Enter
-                                // Confirm the change
+                                e.preventDefault();
                                 if (editRoomName.trim()) {
-                                  updateFirestore(`rooms/${room.id}`, { name: editRoomName })
-                                    .then(() => {
-                                      setRooms(rooms.map(r =>
-                                        r.id === room.id ? { ...r, name: editRoomName } : r
-                                      ));
-                                      setIsEditingRoom(null);
-                                      setEditRoomName('');
-                                    });
+                                  handleEditRoomName(room.id, editRoomName);
                                 }
                               } else if (e.key === ' ') {
                                 e.stopPropagation();
@@ -567,14 +599,14 @@ const Inventory = () => {
                               onClick={() => setSelectedRoom(room)}
                               onDoubleClick={() => {
                                 setIsEditingRoom(room.id);
-                                setEditRoomName(room.name);
+                                setEditRoomName(room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name));
                               }}
                             >
-                              {room.name}
+                              {room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name)}
                               <Badge ml={2}>{room.items.length}</Badge>
                             </Button>
                             <IconButton
-                              aria-label="Delete room"
+                              aria-label={t('button.delete')}
                               icon={<DeleteIcon />}
                               size="sm"
                               variant="ghost"
@@ -596,7 +628,11 @@ const Inventory = () => {
             {selectedRoom ? (
               <Stack spacing={4}>
                 <Flex justify="space-between" align="center">
-                  <Heading size="md">{selectedRoom.name} Items</Heading>
+                  <Heading size="md">
+                    {selectedRoom && (selectedRoom.name.startsWith('custom.') ? 
+                      selectedRoom.name.slice(7) : 
+                      t(selectedRoom.name))} {t('inventory.items')}
+                  </Heading>
                   <Button
                     leftIcon={<AddIcon />}
                     colorScheme="blue"
@@ -605,7 +641,7 @@ const Inventory = () => {
                       onOpen();
                     }}
                   >
-                    Add Item
+                    {t('inventory.addItem')}
                   </Button>
                 </Flex>
                 <SortableContext items={selectedRoom.items.map(item => item.id)} strategy={verticalListSortingStrategy}>
@@ -662,7 +698,7 @@ const Inventory = () => {
               </Stack>
             ) : (
               <Box textAlign="center" py={8}>
-                <Text color="gray.500">Select a room to view and manage items</Text>
+                <Text color="gray.500">{t('inventory.selectRoom')}</Text>
               </Box>
             )}
           </Box>
