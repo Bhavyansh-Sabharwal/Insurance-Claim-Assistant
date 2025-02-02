@@ -536,6 +536,24 @@ const Inventory = () => {
                                   });
                               }
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault(); // Prevent default behavior for Enter
+                                // Confirm the change
+                                if (editRoomName.trim()) {
+                                  updateFirestore(`rooms/${room.id}`, { name: editRoomName })
+                                    .then(() => {
+                                      setRooms(rooms.map(r =>
+                                        r.id === room.id ? { ...r, name: editRoomName } : r
+                                      ));
+                                      setIsEditingRoom(null);
+                                      setEditRoomName('');
+                                    });
+                                }
+                              } else if (e.key === ' ') {
+                                e.stopPropagation();
+                              }
+                            }}
                             autoFocus
                             size="sm"
                           />
