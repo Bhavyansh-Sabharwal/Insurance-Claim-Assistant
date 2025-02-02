@@ -156,6 +156,8 @@ const Collaborate = () => {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="Enter email address"
+                  size="md"
+                  maxH="40px"
                 />
               </FormControl>
 
@@ -180,6 +182,8 @@ const Collaborate = () => {
                 isLoading={isLoading}
                 alignSelf={{ base: 'stretch', md: 'flex-end' }}
                 mt={{ base: 0, md: 8 }}
+                minW="140px"
+                h="40px"
               >
                 Send Invite
               </Button>
