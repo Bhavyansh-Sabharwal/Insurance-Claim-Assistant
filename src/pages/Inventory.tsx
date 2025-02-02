@@ -47,6 +47,8 @@ import {
   useSensors,
   KeyboardSensor,
   DragEndEvent,
+  DragOverEvent,
+  MeasuringStrategy,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -105,7 +107,8 @@ const ItemCard = ({
   onEdit, 
   onDelete, 
   onEditSubmit, 
-  onEditCancel 
+  onEditCancel,
+  isOver
 }: { 
   item: Item;
   isEditing: boolean;
@@ -114,17 +117,17 @@ const ItemCard = ({
   onDelete: () => void;
   onEditSubmit: () => void;
   onEditCancel: () => void;
+  isOver: boolean;
 }) => {
   const bgColor = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
 
   return (
     <Card 
       p={4} 
-      bg={bgColor} 
-      borderColor={borderColor} 
+      bg={isOver ? hoverBgColor : bgColor}
       boxShadow="none" 
-      transition="transform 0.2s ease"
+      transition="background-color 0.2s ease"
     >
       <Stack spacing={2}>
         {isEditing ? (
@@ -316,6 +319,7 @@ const Inventory = () => {
   const [editRoomName, setEditRoomName] = useState('');
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editItemData, setEditItemData] = useState<Partial<Item>>({});
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -359,8 +363,9 @@ const Inventory = () => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    setHoveredItemId(null);
+
     try {
-      // Handle room reordering
       if (active.id.toString().startsWith('room-')) {
         const oldIndex = rooms.findIndex(room => `room-${room.id}` === active.id);
         const newIndex = rooms.findIndex(room => `room-${room.id}` === over.id);
@@ -376,7 +381,6 @@ const Inventory = () => {
         });
         await batch.commit();
       }
-      // Handle item reordering
       else if (selectedRoom) {
         const oldIndex = selectedRoom.items.findIndex(item => item.id === active.id);
         const newIndex = selectedRoom.items.findIndex(item => item.id === over.id);
@@ -392,6 +396,13 @@ const Inventory = () => {
     } catch (error) {
       console.error('Error updating order:', error);
       toast({ title: 'Error updating order', status: 'error', duration: 5000 });
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (over) {
+      setHoveredItemId(over.id as string);
     }
   };
 
@@ -462,7 +473,6 @@ const Inventory = () => {
       setRooms(updatedRooms);
       if (selectedRoom?.id === roomId) setSelectedRoom(null);
 
-      // Update orderIndex for remaining rooms
       const batch = writeBatch(db);
       updatedRooms.forEach(room => {
         batch.update(doc(db, 'rooms', room.id), { orderIndex: room.orderIndex });
@@ -476,8 +486,14 @@ const Inventory = () => {
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <Container maxW="container.xl" py={8}>
+    <DndContext 
+      sensors={sensors} 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd} 
+      onDragOver={handleDragOver}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+    >
+      <Container maxW="container.xl" py={8} style={{ overflow: 'hidden' }}>
         <Grid templateColumns={{ base: '1fr', md: '250px 1fr' }} gap={8}>
           {/* Rooms Sidebar */}
           <Stack spacing={4}>
@@ -619,6 +635,7 @@ const Inventory = () => {
                             setEditingItem(null);
                             setEditItemData({});
                           }}
+                          isOver={hoveredItemId === item.id}
                         />
                       </SortableItem>
                     ))}
