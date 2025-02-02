@@ -23,15 +23,15 @@ if [ ! -f "$IMAGE_PATH" ]; then
     exit 1
 fi
 
-# Convert image to base64
-BASE64_IMAGE=$(base64 -i "$IMAGE_PATH")
+# Convert image to base64 and remove newlines
+BASE64_IMAGE=$(base64 -i "$IMAGE_PATH" | tr -d '\n')
 
 # Send POST request with curl
 echo "Testing $ENDPOINT endpoint with image: $IMAGE_PATH"
 curl -X POST \
-     -H "Content-Type: application/json" \
      -H "Accept: application/json" \
-     -d "{\"image\": \"data:image/jpeg;base64,$BASE64_IMAGE\"}" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     --data-urlencode "image=data:image/jpeg;base64,$BASE64_IMAGE" \
      "$BASE_URL/$ENDPOINT" \
      | python3 -m json.tool
 
