@@ -74,9 +74,11 @@ export const processAndUploadImage = async (
     formData.append('image_url', mainImageUrl);
 
     // Send image to Python backend for object detection
+
     const detectionResponse = await fetch('/api/detect-objects', {
       method: 'POST',
       body: formData
+
     });
 
     if (!detectionResponse.ok) {

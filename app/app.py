@@ -1,13 +1,18 @@
 # Import required dependencies
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from detection import detect_and_crop_objects
-from pricing import analyze_image
 import os
 import random
+import base64
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Add image-detection directory to Python path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../image-detection'))
+from detection import detect_and_crop_objects
+from pricing import analyze_image
 
 # Load environment variables
 load_dotenv()
@@ -30,22 +35,19 @@ def allowed_file(filename):
     """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def analyze_detected_objects(output_dir, app_root_path):
-    """Analyze detected objects in the output directory and return their details.
+def analyze_detected_objects(detected_objects):
+    """Analyze detected objects and return their details.
     
     Args:
-        output_dir (Path): Directory containing cropped object images
-        app_root_path (str): Root path of the Flask application
+        detected_objects (list): List of detected objects with base64 image data
         
     Returns:
         list: List of analyzed objects with their details
     """
     analyzed_objects = []
-    crops_dir = Path(output_dir)
     
-    for f in crops_dir.glob('*.jpg'):
-        image_url = f"file://{f.absolute()}"
-        analysis = analyze_image(image_url)
+    for obj in detected_objects:
+        analysis = analyze_image(obj['image_data'])
         
         # Generate random price if not available or invalid
         price = analysis.get('price', 0)
@@ -53,8 +55,9 @@ def analyze_detected_objects(output_dir, app_root_path):
             price = round(random.random() * 500)
         
         analyzed_objects.append({
-            'label': f.stem.split('_')[0],
-            'path': str(f.relative_to(app_root_path)),
+            'label': obj['label'],
+            'confidence': obj['confidence'],
+            'image_url': obj['image_data'],
             'name': analysis.get('name', 'Unknown Item'),
             'description': analysis.get('description', 'No description available'),
             'estimated_price': price
@@ -94,18 +97,14 @@ def detect_objects():
         return jsonify(error_msg), 400
     
     try:
-        # Save the uploaded file temporarily
-        filename = secure_filename(file.filename)
-        file.save(str(filepath))
+        # Read the image data directly from the request
+        image_data = file.read()
         
         # Process the image for object detection
-        output_dir = detect_and_crop_objects(str(filepath))
+        detected_objects = detect_and_crop_objects(image_data)
         
         # Analyze each detected object
-        analyzed_objects = analyze_detected_objects(output_dir, app.root_path)
-        
-        # Clean up temporary file
-        os.remove(filepath)
+        analyzed_objects = analyze_detected_objects(detected_objects)
         
         # Prepare and return successful response
         response_data = {
@@ -113,6 +112,7 @@ def detect_objects():
             'detected_objects': analyzed_objects
         }
         print(f"[/detect] Response: {response_data}")
+        print(jsonify(response_data))
         return jsonify(response_data)
         
     except Exception as e:
@@ -150,11 +150,14 @@ def analyze_image_endpoint():
         return jsonify(error_msg), 400
     
     try:
-        # Save the uploaded file
-        filename = secure_filename(file.filename)
-    
+        # Read the image data directly from the request
+        image_data = file.read()
+        
+        # Convert image data to data URL format
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        image_url = f"data:image/jpeg;base64,{image_base64}"
+        
         # Analyze the image
-        image_url = f"file://{filepath}"
         analysis = analyze_image(image_url)
         
         # Prepare and return successful response
@@ -163,6 +166,7 @@ def analyze_image_endpoint():
             'analysis': analysis
         }
         print(f"[/analyze] Response: {response_data}")
+        print(jsonify(response_data))
         return jsonify(response_data)
         
     except Exception as e:
