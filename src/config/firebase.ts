@@ -1,3 +1,8 @@
+/**
+ * Firebase configuration and initialization module
+ * This module handles the setup and validation of Firebase services
+ */
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
@@ -5,6 +10,10 @@ import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 
+/**
+ * Firebase configuration object containing essential API keys and identifiers
+ * Values are loaded from environment variables for security
+ */
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -15,7 +24,10 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase only if all required config values are present
+/**
+ * Validates the Firebase configuration by checking for required fields
+ * Throws an error if any required configuration values are missing
+ */
 const validateConfig = () => {
   const requiredFields = [
     'apiKey',
@@ -37,11 +49,15 @@ const validateConfig = () => {
   }
 };
 
+// Validate configuration before initialization
 validateConfig();
 
+// Initialize Firebase app instance
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
-export const db = getFirestore(app);
-export const analytics = getAnalytics(app);
-export const functions = getFunctions(app, 'us-west1'); 
+
+// Export initialized Firebase services
+export const auth = getAuth(app);         // Authentication service
+export const storage = getStorage(app);    // Cloud Storage service
+export const db = getFirestore(app);      // Firestore database service
+export const analytics = getAnalytics(app); // Analytics service
+export const functions = getFunctions(app, 'us-west1');  // Cloud Functions service (us-west1 region)

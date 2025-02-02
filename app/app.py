@@ -1,3 +1,4 @@
+# Import required dependencies
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from detection import detect_and_crop_objects
@@ -8,15 +9,25 @@ from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
+# Initialize Flask app and enable CORS
 app = Flask(__name__)
 CORS(app)
 
-# Configure upload folder
+# Configure allowed file extensions for image uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
+    """Check if the uploaded file has an allowed extension.
+    
+    Args:
+        filename (str): Name of the uploaded file
+        
+    Returns:
+        bool: True if file extension is allowed, False otherwise
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def analyze_detected_objects(output_dir, app_root_path):
@@ -53,6 +64,19 @@ def analyze_detected_objects(output_dir, app_root_path):
 
 @app.route('/detect', methods=['POST'])
 def detect_objects():
+    """Handle POST requests to detect objects in uploaded images.
+    
+    This endpoint:
+    1. Validates the uploaded image file
+    2. Saves it temporarily
+    3. Processes it for object detection
+    4. Analyzes detected objects
+    5. Returns the analysis results
+    
+    Returns:
+        JSON: Detection results or error message with appropriate status code
+    """
+    # Validate image file presence
     if 'image' not in request.files:
         error_msg = {'error': 'No image file provided'}
         print(f"[/detect] Error: {error_msg}")
@@ -70,19 +94,20 @@ def detect_objects():
         return jsonify(error_msg), 400
     
     try:
-        # Save the uploaded file
+        # Save the uploaded file temporarily
         filename = secure_filename(file.filename)
         file.save(str(filepath))
         
-        # Process the image
+        # Process the image for object detection
         output_dir = detect_and_crop_objects(str(filepath))
         
-        # Analyze the detected objects
+        # Analyze each detected object
         analyzed_objects = analyze_detected_objects(output_dir, app.root_path)
         
-        # Clean up the uploaded file
+        # Clean up temporary file
         os.remove(filepath)
         
+        # Prepare and return successful response
         response_data = {
             'success': True,
             'detected_objects': analyzed_objects
@@ -97,6 +122,17 @@ def detect_objects():
 
 @app.route('/analyze', methods=['POST'])
 def analyze_image_endpoint():
+    """Handle POST requests to analyze a single image.
+    
+    This endpoint:
+    1. Validates the uploaded image file
+    2. Processes it for analysis
+    3. Returns the analysis results
+    
+    Returns:
+        JSON: Analysis results or error message with appropriate status code
+    """
+    # Validate image file presence
     if 'image' not in request.files:
         error_msg = {'error': 'No image file provided'}
         print(f"[/analyze] Error: {error_msg}")
@@ -117,11 +153,11 @@ def analyze_image_endpoint():
         # Save the uploaded file
         filename = secure_filename(file.filename)
     
-        
         # Analyze the image
         image_url = f"file://{filepath}"
         analysis = analyze_image(image_url)
         
+        # Prepare and return successful response
         response_data = {
             'success': True,
             'analysis': analysis
@@ -134,5 +170,6 @@ def analyze_image_endpoint():
         print(f"[/analyze] Error: {error_response}")
         return jsonify(error_response), 500
 
+# Start the Flask server if running directly
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=True)

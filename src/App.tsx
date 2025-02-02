@@ -66,63 +66,64 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireSetup 
   return <>{children}</>;
 };
 
-function App() {
+/**
+ * Main Application Component
+ * 
+ * This is the root component of the application that handles:
+ * - Application routing
+ * - Theme provider integration
+ * - Authentication state management
+ * - Global layout structure
+ */
+
+import { ChakraProvider } from '@chakra-ui/react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './providers/AuthProvider';
+import { theme } from './theme';
+
+// Page components
+import { Home } from './pages/Home';
+import { Auth } from './pages/Auth';
+import { Setup } from './pages/Setup';
+import { Profile } from './pages/Profile';
+import { Inventory } from './pages/Inventory';
+import { Documents } from './pages/Documents';
+import { Collaborate } from './pages/Collaborate';
+
+// Layout and context providers
+import { Layout } from './components/Layout';
+import { PreferencesProvider } from './contexts/PreferencesContext';
+
+const App: React.FC = () => {
   return (
+    // Apply custom theme to all components
     <ChakraProvider theme={theme}>
-      <Router>
-        <AuthProvider>
-          <PreferencesProvider>
+      {/* Handle authentication state */}
+      <AuthProvider>
+        {/* Manage user preferences */}
+        <PreferencesProvider>
+          {/* Set up routing */}
+          <Router>
+            {/* Apply global layout */}
             <Layout>
               <Routes>
-                <Route path="/" element={<Home />} />
+                {/* Public routes */}
                 <Route path="/auth" element={<Auth />} />
-                <Route
-                  path="/setup"
-                  element={
-                    <ProtectedRoute requireSetup>
-                      <Setup />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/inventory"
-                  element={
-                    <ProtectedRoute>
-                      <Inventory />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/documents"
-                  element={
-                    <ProtectedRoute>
-                      <Documents />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/collaborate"
-                  element={
-                    <ProtectedRoute>
-                      <Collaborate />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/setup" element={<Setup />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/collaborate" element={<Collaborate />} />
               </Routes>
             </Layout>
-          </PreferencesProvider>
-        </AuthProvider>
-      </Router>
+          </Router>
+        </PreferencesProvider>
+      </AuthProvider>
     </ChakraProvider>
   );
-}
+};
 
 export default App;

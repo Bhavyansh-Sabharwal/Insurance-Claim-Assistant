@@ -9,7 +9,7 @@ import {
   Spinner,
   Center
 } from '@chakra-ui/react';
-import { processAndUploadImage } from '../services/imageProcessing';
+import { processAndUploadImage } from '../services/imageService';
 import { DetectedObjectsModal } from './DetectedObjectsModal';
 
 interface FileUploadProps {
@@ -18,19 +18,32 @@ interface FileUploadProps {
   onUploadComplete: (document: any) => void;
 }
 
+/**
+ * FileUpload Component
+ * 
+ * A reusable component that handles image file uploads with object detection capabilities.
+ * Provides drag-and-drop functionality and displays upload progress and detected objects.
+ */
+
 export const FileUpload: React.FC<FileUploadProps> = ({
   itemId,
   userId,
   onUploadComplete
 }) => {
+  // Hooks for managing component state
   const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
   const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
 
+  /**
+   * Handles file drop events and processes uploaded images
+   * Validates file types, manages upload state, and processes detected objects
+   */
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
+      // Validate file type
       if (!file.type.startsWith('image/')) {
         toast({
           title: 'Invalid file type',
@@ -41,14 +54,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         continue;
       }
 
+      // Set upload state and show progress
       setIsUploading(true);
       setUploadProgress('Uploading image...');
       
       try {
+        // Process image and detect objects
         setUploadProgress('Processing image and detecting objects...');
         const result = await processAndUploadImage(userId, itemId, file);
         
-        // Transform detected objects for the modal
+        // Transform detected objects for the modal display
         const objects = result.detectedObjects.map(obj => ({
           label: obj.label,
           imageUrl: obj.imageUrl
@@ -56,6 +71,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         
         setDetectedObjects(objects);
         
+        // Show success message based on detection results
         if (objects.length > 0) {
           setShowDetectedObjects(true);
           toast({
@@ -83,12 +99,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           duration: 5000,
         });
       } finally {
+        // Reset upload state
         setIsUploading(false);
         setUploadProgress('');
       }
     }
   }, [itemId, userId, onUploadComplete]);
 
+  // Configure dropzone with accepted file types and upload state
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -99,6 +117,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <>
+      {/* File upload dropzone area */}
       <Box
         {...getRootProps()}
         p={6}
@@ -112,6 +131,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <input {...getInputProps()} disabled={isUploading} />
         <VStack spacing={2}>
           {isUploading ? (
+            // Upload progress indicator
             <Center p={4}>
               <VStack spacing={4}>
                 <Spinner size="xl" />
@@ -120,6 +140,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               </VStack>
             </Center>
           ) : (
+            // Upload instructions
             <>
               <Text>
                 {isDragActive
@@ -134,6 +155,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </VStack>
       </Box>
 
+      {/* Modal for displaying detected objects */}
       <DetectedObjectsModal
         isOpen={showDetectedObjects}
         onClose={() => setShowDetectedObjects(false)}
@@ -141,4 +163,4 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       />
     </>
   );
-}; 
+};
