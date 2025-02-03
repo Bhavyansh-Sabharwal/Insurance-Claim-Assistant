@@ -6,11 +6,9 @@ import {
   VStack,
   Image,
   Progress,
-  useToast,
-  Button
+  useToast
 } from '@chakra-ui/react';
 import { uploadDocument } from '../services/storage';
-import { DocumentReference } from '../types/models';
 
 interface FileUploadProps {
   itemId: string;

@@ -1,6 +1,3 @@
-export type Language = 'en' | 'es' | 'fr';
-export type Currency = 'USD' | 'EUR' | 'GBP';
-
 export interface UserProfile {
   uid: string;
   email: string;

@@ -10,8 +10,7 @@ import {
   updateDoc,
   writeBatch,
   DocumentData,
-  QueryConstraint,
-  orderBy
+  QueryConstraint
 } from 'firebase/firestore';
 import { 
   ref, 

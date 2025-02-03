@@ -1,6 +1,6 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage, db } from '../config/firebase';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { DocumentReference } from '../types/models';
 
 export const uploadDocument = async (
@@ -39,15 +39,18 @@ export const uploadDocument = async (
 };
 
 export const deleteDocument = async (
+  userId: string,
   itemId: string,
-  documentId: string,
-  storageUrl: string
-) => {
-  const storageRef = ref(storage, storageUrl);
+  documentId: string
+): Promise<void> => {
+  // Delete from Storage
+  const storageRef = ref(storage, documentId);
   await deleteObject(storageRef);
 
+  // Update Firestore document
   const itemRef = doc(db, 'items', itemId);
   await updateDoc(itemRef, {
-    documents: arrayRemove(documentId)
+    documents: arrayRemove({ id: documentId }),
+    updatedAt: new Date()
   });
 }; 
