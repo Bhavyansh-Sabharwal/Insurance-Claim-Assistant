@@ -74,7 +74,7 @@ type Item = {
 
 type Room = {
   id: string;
-  name: TranslationKey;
+  name: TranslationKey | string;
   items: Item[];
   userId: string;
   orderIndex: number;
@@ -132,7 +132,7 @@ const ItemCard = ({
   onEditCancel: () => void;
   isOver: boolean;
 }) => {
-  const { t } = useLocalization();
+  const { } = useLocalization();
   const bgColor = useColorModeValue('white', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
 
@@ -365,7 +365,7 @@ const AddItemModal = ({
 // Main Component
 const Inventory = () => {
   const { currentUser } = useAuth();
-  const { t, formatCurrency } = useLocalization();
+  const { t } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -634,10 +634,10 @@ const Inventory = () => {
                               onClick={() => setSelectedRoom(room)}
                               onDoubleClick={() => {
                                 setIsEditingRoom(room.id);
-                                setEditRoomName(room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name));
+                                setEditRoomName(room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name as TranslationKey));
                               }}
                             >
-                              {room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name)}
+{room.name.startsWith('custom.') ? room.name.slice(7) : t(room.name as TranslationKey)}
                               <Badge ml={2}>{room.items.length}</Badge>
                             </Button>
                             <IconButton
@@ -666,7 +666,7 @@ const Inventory = () => {
                   <Heading size="md">
                     {selectedRoom && (selectedRoom.name.startsWith('custom.') ? 
                       selectedRoom.name.slice(7) : 
-                      t(selectedRoom.name))} {t('inventory.items')}
+                      t(selectedRoom.name as TranslationKey))} {t('inventory.items')}
                   </Heading>
                   <Button
                     leftIcon={<AddIcon />}

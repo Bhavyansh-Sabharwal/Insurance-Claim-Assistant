@@ -152,7 +152,8 @@ const Setup = () => {
         .filter(room => room.selected)
         .map(room => room.name);
       
-      const allRooms = [...selectedRooms, ...formData.customRooms];
+      const customRoomsWithPrefix = formData.customRooms.map(room => `custom.${room}`);
+      const allRooms = [...selectedRooms, ...customRoomsWithPrefix];
       
       // Use Promise.all to wait for all room creations to complete
       await Promise.all(allRooms.map(async (roomName, i) => {
@@ -326,4 +327,4 @@ const Setup = () => {
   );
 };
 
-export default Setup; 
+export default Setup;
