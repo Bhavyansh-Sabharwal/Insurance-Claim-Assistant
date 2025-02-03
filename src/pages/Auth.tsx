@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Box,
   Button,
+  Card,
   Divider,
   FormControl,
   FormLabel,
@@ -9,32 +11,44 @@ import {
   Input,
   Stack,
   Text,
+  useToast,
   VStack,
 } from '@chakra-ui/react';
 import { FcGoogle } from 'react-icons/fc';
 import { useAuth } from '../contexts/AuthContext';
-import { FormContainer, CommonCard } from '../components/shared/UIComponents';
-import { useForm, useErrorHandler, useLoading } from '../hooks/useCommon';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const { loginWithEmail, signupWithEmail, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const handleError = useErrorHandler();
-  const { loading, withLoading } = useLoading();
-  const { values, handleChange } = useForm({ email: '', password: '' });
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    withLoading(async () => {
-      try {
-        const authFn = isLogin ? loginWithEmail : signupWithEmail;
-        await authFn(values.email, values.password);
-        navigate('/setup');
-      } catch (error) {
-        handleError(error);
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await loginWithEmail(email, password);
+      } else {
+        await signupWithEmail(email, password);
       }
-    });
+      navigate('/setup');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+
+    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -42,13 +56,19 @@ const Auth = () => {
       await loginWithGoogle();
       navigate('/setup');
     } catch (error) {
-      handleError(error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <FormContainer>
-      <CommonCard>
+    <Box maxW="md" mx="auto" py={12}>
+      <Card p={8}>
         <VStack spacing={6}>
           <Heading size="lg">{isLogin ? 'Sign In' : 'Create Account'}</Heading>
           
@@ -69,8 +89,8 @@ const Auth = () => {
                 <FormLabel>Email</FormLabel>
                 <Input
                   type="email"
-                  value={values.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </FormControl>
 
@@ -78,8 +98,8 @@ const Auth = () => {
                 <FormLabel>Password</FormLabel>
                 <Input
                   type="password"
-                  value={values.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </FormControl>
 
@@ -105,8 +125,8 @@ const Auth = () => {
             </Button>
           </Text>
         </VStack>
-      </CommonCard>
-    </FormContainer>
+      </Card>
+    </Box>
   );
 };
 
