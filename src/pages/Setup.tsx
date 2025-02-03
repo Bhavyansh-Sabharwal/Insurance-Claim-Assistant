@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -70,8 +70,16 @@ const Setup = () => {
   const { updatePreferences, setPreferencesImmediately } = usePreferences();
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
+  
+  // Redirect if no user
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/auth');
+    }
+  }, [currentUser, navigate]);
   
   const [formData, setFormData] = useState<FormData>({
     language: 'en',
@@ -130,31 +138,29 @@ const Setup = () => {
   };
 
   const handleComplete = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast({
+        title: 'Error',
+        description: 'Please sign in to complete setup',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      navigate('/auth');
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
-      // Create rooms in Firestore first
-      const selectedRooms = formData.rooms
-        .filter(room => room.selected)
-        .map(room => room.name);
-      
-      const customRoomsWithPrefix = formData.customRooms.map(room => `custom.${room}`);
-      const allRooms = [...selectedRooms, ...customRoomsWithPrefix];
-      
-      // Use Promise.all to wait for all room creations to complete
-      await Promise.all(allRooms.map(async (roomName, i) => {
-        const roomRef = doc(collection(db, 'rooms'));
-        await setDoc(roomRef, {
-          id: roomRef.id,
-          name: roomName,
-          items: [],
-          userId: currentUser.uid,
-          orderIndex: i,
-        });
-      }));
-
-      // Save user preferences and mark setup as completed
+      // First ensure we can write to the user's document
       const userRef = doc(db, 'users', currentUser.uid);
+      const testWrite = await setDoc(userRef, {
+        lastActive: new Date(),
+      }, { merge: true });
+
+      // Then proceed with the full setup
       await setDoc(userRef, {
         preferences: {
           language: formData.language,
@@ -165,22 +171,76 @@ const Setup = () => {
           address: formData.address,
           rooms: formData.rooms.filter(room => room.selected).length + formData.customRooms.length
         },
-        setupCompleted: true
-      }, { merge: true });
+        setupCompleted: true,
+        lastUpdated: new Date()
+      });
 
-      // Wait a moment for Firestore to sync
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update preferences in context first
+      updatePreferences({
+        language: formData.language,
+        currency: formData.currency
+      });
+
+      // Then create rooms with retry logic
+      const selectedRooms = formData.rooms
+        .filter(room => room.selected)
+        .map(room => room.name);
       
-      navigate('/inventory');
+      const customRoomsWithPrefix = formData.customRooms.map(room => `custom.${room}`);
+      const allRooms = [...selectedRooms, ...customRoomsWithPrefix];
+      
+      // Create rooms one by one with retry logic
+      for (let i = 0; i < allRooms.length; i++) {
+        const roomName = allRooms[i];
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            const roomRef = doc(collection(db, 'rooms'));
+            await setDoc(roomRef, {
+              id: roomRef.id,
+              name: roomName,
+              items: [],
+              userId: currentUser.uid,
+              orderIndex: i,
+              createdAt: new Date()
+            });
+            break;
+          } catch (error) {
+            retryCount++;
+            if (retryCount === maxRetries) {
+              console.error(`Failed to create room after ${maxRetries} attempts:`, error);
+            } else {
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+            }
+          }
+        }
+      }
+
+      // Force a small delay to ensure Firestore has propagated the changes
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Force refresh to inventory page instead of using React Router
+      window.location.href = '/inventory';
     } catch (error) {
       console.error('Setup error:', error);
       toast({
         title: 'Error',
-        description: t('error.setupFailed'),
+        description: error instanceof Error ? error.message : t('error.setupFailed'),
         status: 'error',
         duration: 5000,
         isClosable: true,
       });
+      
+      // If we get a permission error, redirect to auth
+      if (error instanceof Error && 
+          (error.message.includes('permission-denied') || 
+           error.message.includes('unauthenticated'))) {
+        navigate('/auth');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -296,6 +356,11 @@ const Setup = () => {
         return null;
     }
   };
+
+  // Don't render anything if no user
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <Box maxW="container.md" mx="auto" py={8}>
