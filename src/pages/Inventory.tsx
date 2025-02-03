@@ -25,7 +25,7 @@ import {
   Select,
   useToast,
 } from '@chakra-ui/react';
-import { AddIcon, DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import { AddIcon, DeleteIcon, EditIcon, AttachmentIcon } from '@chakra-ui/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import {
@@ -59,6 +59,7 @@ import { SortableItem } from '../components/SortableItem';
 import SortableHandle from '../components/SortableHandle';
 import { useLocalization } from '../hooks/useLocalization';
 import { Language } from '../contexts/PreferencesContext';
+import { FileUpload } from '../components/FileUpload';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
@@ -368,6 +369,11 @@ const Inventory = () => {
   const { t } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { 
+    isOpen: isImageUploadOpen, 
+    onOpen: onImageUploadOpen, 
+    onClose: onImageUploadClose 
+  } = useDisclosure();
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   
@@ -567,6 +573,15 @@ const Inventory = () => {
     }
   };
 
+  const handleImageUpload = (document: any) => {
+    toast({
+      title: 'Image uploaded successfully',
+      status: 'success',
+      duration: 2000,
+    });
+    onImageUploadClose();
+  };
+
   return (
     <DndContext 
       sensors={sensors} 
@@ -668,16 +683,25 @@ const Inventory = () => {
                       selectedRoom.name.slice(7) : 
                       t(selectedRoom.name as TranslationKey))} {t('inventory.items')}
                   </Heading>
-                  <Button
-                    leftIcon={<AddIcon />}
-                    colorScheme="blue"
-                    onClick={() => {
-                      setNewItem({ category: categories[0] });
-                      onOpen();
-                    }}
-                  >
-                    {t('inventory.addItem')}
-                  </Button>
+                  <Flex gap={2}>
+                    <Button
+                      leftIcon={<AttachmentIcon />}
+                      colorScheme="teal"
+                      onClick={onImageUploadOpen}
+                    >
+                      {t('inventory.addImage')}
+                    </Button>
+                    <Button
+                      leftIcon={<AddIcon />}
+                      colorScheme="blue"
+                      onClick={() => {
+                        setNewItem({ category: categories[0] });
+                        onOpen();
+                      }}
+                    >
+                      {t('inventory.addItem')}
+                    </Button>
+                  </Flex>
                 </Flex>
                 <SortableContext items={selectedRoom.items.map(item => item.id)} strategy={verticalListSortingStrategy}>
                   <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={4}>
@@ -746,6 +770,26 @@ const Inventory = () => {
           newItem={newItem}
           setNewItem={setNewItem}
         />
+
+        {/* Add Image Upload Modal */}
+        <Modal isOpen={isImageUploadOpen} onClose={onImageUploadClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>{t('inventory.uploadImage')}</ModalHeader>
+            <ModalBody>
+              {selectedRoom && currentUser && (
+                <FileUpload
+                  itemId={selectedRoom.id}
+                  userId={currentUser.uid}
+                  onUploadComplete={handleImageUpload}
+                />
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={onImageUploadClose}>{t('button.close')}</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Container>
     </DndContext>
   );
