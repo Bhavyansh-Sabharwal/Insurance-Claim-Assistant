@@ -12,9 +12,12 @@ import {
   useToast,
   Container,
   useColorModeValue,
+  VStack,
+  Text,
 } from '@chakra-ui/react';
-import { useAuth } from '../contexts/AuthContext';
-import { usePreferences, Language, Currency } from '../contexts/PreferencesContext';
+import { useAuth } from '../hooks/useAuth';
+import { usePreferences } from '../hooks/usePreferences';
+import { Language } from '../types/models';
 import { useLocalization } from '../hooks/useLocalization';
 import { updateUserProfile } from '../services/database';
 import { doc, getDoc } from 'firebase/firestore';

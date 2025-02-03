@@ -225,7 +225,7 @@ const ItemDisplay = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => {
-  const { t, formatCurrency } = useLocalization();
+  const { t } = useLocalization();
   return (
     <>
       <Flex justify="space-between" align="center">
@@ -253,7 +253,7 @@ const ItemDisplay = ({
       <Flex justify="space-between" align="center">
         <Badge colorScheme="blue">{t(item.category)}</Badge>
         <Text fontWeight="bold">
-          {formatCurrency(item.estimatedValue)}
+          {item.estimatedValue.toLocaleString()}
         </Text>
       </Flex>
     </>
@@ -330,7 +330,7 @@ const AddItemModal = ({
 // Main Component
 const Inventory = () => {
   const { currentUser } = useAuth();
-  const { t, formatCurrency } = useLocalization();
+  const { t } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const bgColor = useColorModeValue('white', 'gray.700');
