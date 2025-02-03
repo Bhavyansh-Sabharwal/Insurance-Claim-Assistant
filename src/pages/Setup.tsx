@@ -167,7 +167,7 @@ const Setup = () => {
         });
       }));
       
-      window.location.href = '/inventory';
+      navigate('/inventory');
     } catch (error) {
       console.error('Setup error:', error);
       toast({
