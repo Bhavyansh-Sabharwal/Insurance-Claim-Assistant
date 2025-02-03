@@ -4,17 +4,14 @@ import {
   Box,
   Text,
   VStack,
-  Image,
-  Progress,
   useToast
 } from '@chakra-ui/react';
-import { DocumentReference } from 'firebase/firestore';
 import { uploadDocument } from '../services/storage';
 
 interface FileUploadProps {
   itemId: string;
   userId: string;
-  onUploadComplete: (document: DocumentReference) => void;
+  onUploadComplete: (document: any) => void;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
