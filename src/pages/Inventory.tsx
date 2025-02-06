@@ -858,7 +858,11 @@ const Inventory = () => {
         <DetectedObjectsModal
           isOpen={showDetectedObjects}
           onClose={() => setShowDetectedObjects(false)}
-          detectedObjects={detectedObjects}
+          detectedObjects={detectedObjects.map(obj => ({
+            ...obj,
+            description: '',
+            estimated_price: 0
+          }))}
         />
       </Container>
     </DndContext>

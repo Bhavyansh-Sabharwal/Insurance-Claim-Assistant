@@ -10,6 +10,8 @@ import Profile from './pages/Profile';
 import Inventory from './pages/Inventory';
 import Documents from './pages/Documents';
 import Collaborate from './pages/Collaborate';
+import Join from './pages/join';
+import JoinReject from './pages/join/reject';
 import theme from './theme';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -92,6 +94,8 @@ const App: React.FC = () => {
                 {/* Public routes */}
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/setup" element={<Setup />} />
+                <Route path="/join" element={<Join />} />
+                <Route path="/join/reject" element={<JoinReject />} />
                 
                 {/* Protected routes */}
                 <Route path="/" element={<Home />} />

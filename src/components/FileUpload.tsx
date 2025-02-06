@@ -159,7 +159,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <DetectedObjectsModal
         isOpen={showDetectedObjects}
         onClose={() => setShowDetectedObjects(false)}
-        detectedObjects={detectedObjects}
+        detectedObjects={detectedObjects as any}
       />
     </>
   );
