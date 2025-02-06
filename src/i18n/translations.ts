@@ -1,6 +1,6 @@
 import { Language } from '../contexts/PreferencesContext';
 
-type TranslationKey = 
+export type TranslationKey = 
   | 'setup.basicInfo'
   | 'setup.roomSetup'
   | 'setup.language'
@@ -126,6 +126,10 @@ type TranslationKey =
   | 'inventory.addImage'
   | 'inventory.uploadImage'
   | 'button.close'
+  | 'inventory.downloadPDF'
+  | 'inventory.pdfDownloaded'
+  | 'inventory.totalValue'
+  | 'error.pdfGenerationFailed'
   | `custom.${string}`;
 
 type Translations = {
@@ -261,6 +265,10 @@ export const translations: Translations = {
     'inventory.addImage': 'Add Image',
     'inventory.uploadImage': 'Upload Image',
     'button.close': 'Close',
+    'inventory.downloadPDF': 'Download PDF',
+    'inventory.pdfDownloaded': 'PDF downloaded successfully',
+    'inventory.totalValue': 'Total Value',
+    'error.pdfGenerationFailed': 'Failed to generate PDF',
   },
   es: {
     'setup.basicInfo': 'Información Básica',
@@ -388,6 +396,10 @@ export const translations: Translations = {
     'inventory.addImage': 'Agregar Imagen',
     'inventory.uploadImage': 'Subir Imagen',
     'button.close': 'Cerrar',
+    'inventory.downloadPDF': 'Descargar PDF',
+    'inventory.pdfDownloaded': 'PDF descargado exitosamente',
+    'inventory.totalValue': 'Valor Total',
+    'error.pdfGenerationFailed': 'Error al generar PDF',
   },
   fr: {
     'setup.basicInfo': 'Informations de Base',
@@ -515,6 +527,10 @@ export const translations: Translations = {
     'inventory.addImage': 'Ajouter une Image',
     'inventory.uploadImage': 'Télécharger une Image',
     'button.close': 'Fermer',
+    'inventory.downloadPDF': 'Télécharger PDF',
+    'inventory.pdfDownloaded': 'PDF téléchargé avec succès',
+    'inventory.totalValue': 'Valeur Totale',
+    'error.pdfGenerationFailed': 'Échec de la génération de PDF',
   },
   de: {
     'setup.basicInfo': 'Grundinformationen',
@@ -642,6 +658,10 @@ export const translations: Translations = {
     'inventory.addImage': 'Bild Hinzufügen',
     'inventory.uploadImage': 'Bild Hochladen',
     'button.close': 'Schließen',
+    'inventory.downloadPDF': 'PDF herunterladen',
+    'inventory.pdfDownloaded': 'PDF erfolgreich heruntergeladen',
+    'inventory.totalValue': 'Gesamtwert',
+    'error.pdfGenerationFailed': 'PDF-Generierung fehlgeschlagen',
   },
   hi: {
     'setup.basicInfo': 'मूल जानकारी',
@@ -769,5 +789,9 @@ export const translations: Translations = {
     'inventory.addImage': 'छवि जोड़ें',
     'inventory.uploadImage': 'छवि अपलोड करें',
     'button.close': 'बंद करें',
+    'inventory.downloadPDF': 'PDF डाउनलोड करें',
+    'inventory.pdfDownloaded': 'PDF सफलतापूर्वक डाउनलोड हुआ',
+    'inventory.totalValue': 'कुल मूल्य',
+    'error.pdfGenerationFailed': 'PDF उत्पन्न विफल हुआ',
   },
 }; 

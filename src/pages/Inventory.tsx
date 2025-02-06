@@ -25,7 +25,7 @@ import {
   Select,
   useToast,
 } from '@chakra-ui/react';
-import { AddIcon, DeleteIcon, EditIcon, AttachmentIcon } from '@chakra-ui/icons';
+import { AddIcon, DeleteIcon, EditIcon, AttachmentIcon, DownloadIcon } from '@chakra-ui/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../config/firebase';
 import {
@@ -61,6 +61,7 @@ import { useLocalization } from '../hooks/useLocalization';
 import { Language } from '../contexts/PreferencesContext';
 import { FileUpload } from '../components/FileUpload';
 import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
+import { generatePDF } from '../components/InventoryPDF';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
@@ -378,7 +379,7 @@ const AddItemModal = ({
 // Main Component
 const Inventory = () => {
   const { currentUser } = useAuth();
-  const { t } = useLocalization();
+  const { t, formatCurrency } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { 
@@ -601,6 +602,38 @@ const Inventory = () => {
     onImageUploadClose();
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      const blob = await generatePDF({
+        rooms,
+        t,
+        formatCurrency,
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inventory-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: t('inventory.pdfDownloaded'),
+        status: 'success',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: t('error.pdfGenerationFailed'),
+        status: 'error',
+        duration: 5000,
+      });
+    }
+  };
+
   return (
     <DndContext 
       sensors={sensors} 
@@ -703,6 +736,13 @@ const Inventory = () => {
                       t(selectedRoom.name as TranslationKey))} {t('inventory.items')}
                   </Heading>
                   <Flex gap={2}>
+                    <Button
+                      leftIcon={<DownloadIcon />}
+                      colorScheme="green"
+                      onClick={handleDownloadPDF}
+                    >
+                      {t('inventory.downloadPDF')}
+                    </Button>
                     <Button
                       leftIcon={<AttachmentIcon />}
                       colorScheme="teal"
