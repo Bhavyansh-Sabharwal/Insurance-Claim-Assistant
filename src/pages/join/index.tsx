@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, updateDoc, setDoc, getDoc, collection } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, setDoc, getDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
 const JoinPage = () => {
   const [searchParams] = useSearchParams();
@@ -63,7 +63,7 @@ const JoinPage = () => {
       console.log('Creating user document...');
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
-        setupCompleted: false,
+        setupCompleted: true, // Mark setup as completed
         createdAt: new Date().toISOString(),
         primaryHousehold: senderId
       });
@@ -92,7 +92,7 @@ const JoinPage = () => {
         console.log('Household created');
       }
 
-      // Finally add the user as a member
+      // Add the user as a member
       console.log('Adding user to household...');
       await setDoc(doc(db, 'households', senderId, 'members', user.uid), {
         email: user.email,
@@ -102,6 +102,34 @@ const JoinPage = () => {
       });
       console.log('User added to household');
 
+      // Merge documents and inventory
+      console.log('Merging user data...');
+      
+      // Get all documents from the invitee
+      const docsQuery = query(collection(db, 'documents'), where('userId', '==', user.uid));
+      const docsSnapshot = await getDocs(docsQuery);
+      
+      // Update document ownership to sender
+      const batch = writeBatch(db);
+      docsSnapshot.forEach((docSnapshot) => {
+        const docRef = doc(db, 'documents', docSnapshot.id);
+        batch.update(docRef, { userId: senderId });
+      });
+      
+      // Get all rooms/inventory from the invitee
+      const roomsQuery = query(collection(db, 'rooms'), where('userId', '==', user.uid));
+      const roomsSnapshot = await getDocs(roomsQuery);
+      
+      // Update room ownership to sender
+      roomsSnapshot.forEach((roomSnapshot) => {
+        const roomRef = doc(db, 'rooms', roomSnapshot.id);
+        batch.update(roomRef, { userId: senderId });
+      });
+      
+      // Commit all updates
+      await batch.commit();
+      console.log('Data merged successfully');
+
       toast({
         title: 'Account created',
         description: 'You have successfully joined the household',
@@ -110,8 +138,8 @@ const JoinPage = () => {
         isClosable: true,
       });
 
-      // Navigate to setup page
-      navigate('/setup');
+      // Navigate to inventory page instead of setup
+      navigate('/inventory');
     } catch (error: any) {
       console.error('Signup error:', error);
       if (error.code) console.error('Error code:', error.code);
@@ -182,4 +210,4 @@ const JoinPage = () => {
   );
 };
 
-export default JoinPage; 
+export default JoinPage;
