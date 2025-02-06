@@ -32,7 +32,6 @@ def detect_and_crop_objects(image_path):
         
         cropped = image[y_min:y_max, x_min:x_max]
         
-
         output_path = output_dir / f"{obj['label']}_{idx}.jpg"
         cv2.imwrite(str(output_path), cropped)
         print(f"Saved {output_path}")
