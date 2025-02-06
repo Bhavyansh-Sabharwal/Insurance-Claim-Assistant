@@ -11,9 +11,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   table: {
-    display: 'table',
     width: '100%',
-    borderStyle: 'solid',
     borderWidth: 1,
     borderColor: '#000',
   },
