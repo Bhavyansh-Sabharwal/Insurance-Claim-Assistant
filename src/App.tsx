@@ -76,24 +76,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireSetup 
  * - Global layout structure
  */
 
-import { ChakraProvider } from '@chakra-ui/react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './providers/AuthProvider';
-import { theme } from './theme';
-
-// Page components
-import { Home } from './pages/Home';
-import { Auth } from './pages/Auth';
-import { Setup } from './pages/Setup';
-import { Profile } from './pages/Profile';
-import { Inventory } from './pages/Inventory';
-import { Documents } from './pages/Documents';
-import { Collaborate } from './pages/Collaborate';
-
-// Layout and context providers
-import { Layout } from './components/Layout';
-import { PreferencesProvider } from './contexts/PreferencesContext';
-
 const App: React.FC = () => {
   return (
     // Apply custom theme to all components
