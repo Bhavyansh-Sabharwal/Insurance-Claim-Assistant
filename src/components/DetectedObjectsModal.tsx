@@ -12,13 +12,17 @@ import {
   IconButton,
   Text,
   Box,
-  Badge
+  Badge,
+  VStack
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { useLocalization } from '../hooks/useLocalization';
 
 interface DetectedObject {
   label: string;
   imageUrl: string;
+  description: string;
+  estimated_price: number;
 }
 
 interface DetectedObjectsModalProps {
@@ -33,6 +37,7 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   detectedObjects
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { formatCurrency } = useLocalization();
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? detectedObjects.length - 1 : prev - 1));
@@ -93,22 +98,18 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
                 objectFit="contain"
                 width="100%"
                 height="100%"
-                borderRadius="md"
               />
-              <Box
-                position="absolute"
-                bottom={0}
-                left={0}
-                right={0}
-                p={4}
-                bg="blackAlpha.600"
-                color="white"
-                borderBottomRadius="md"
-              >
-                <Text fontSize="lg" fontWeight="bold" textAlign="center">
+              <VStack spacing={2} mt={4} align="start" width="100%">
+                <Text fontSize="lg" fontWeight="bold">
                   {detectedObjects[currentIndex].label}
                 </Text>
-              </Box>
+                <Text color="gray.600">
+                  {detectedObjects[currentIndex].description}
+                </Text>
+                <Text fontSize="lg" color="green.600" fontWeight="semibold">
+                  Estimated Value: {formatCurrency(detectedObjects[currentIndex].estimated_price)}
+                </Text>
+              </VStack>
             </Box>
             <IconButton
               aria-label="Next image"
