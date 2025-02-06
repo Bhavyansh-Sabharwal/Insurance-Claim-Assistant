@@ -64,6 +64,17 @@ import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
+interface DetectedObject {
+  label: string;
+  imageUrl: string;
+  confidence: number;
+  metadata?: {
+    brand?: string;
+    title?: string;
+    gtins?: string[];
+  };
+}
+
 // Types
 type Item = {
   id: string;
@@ -387,7 +398,7 @@ const Inventory = () => {
   const [editItemData, setEditItemData] = useState<Partial<Item>>({});
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
-  const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
+  const [detectedObjects, setDetectedObjects] = useState<DetectedObject[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

@@ -12,13 +12,21 @@ import {
   IconButton,
   Text,
   Box,
-  Badge
+  Badge,
+  VStack,
+  HStack
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 
 interface DetectedObject {
   label: string;
   imageUrl: string;
+  confidence: number;
+  metadata?: {
+    brand?: string;
+    title?: string;
+    gtins?: string[];
+  };
 }
 
 interface DetectedObjectsModalProps {
@@ -55,6 +63,9 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
 
   if (!detectedObjects.length) return null;
 
+  const currentObject = detectedObjects[currentIndex];
+  const confidence = Math.round(currentObject.confidence * 100);
+
   return (
     <Modal 
       isOpen={isOpen} 
@@ -66,7 +77,7 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
       <ModalContent onKeyDown={handleKeyDown}>
         <ModalHeader>
           <Flex justify="space-between" align="center">
-            <Text>Detected Objects</Text>
+            <Text>Detected Products</Text>
             <Badge colorScheme="blue">
               {currentIndex + 1} of {detectedObjects.length}
             </Badge>
@@ -88,8 +99,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
             />
             <Box width="100%" height="400px" position="relative">
               <Image
-                src={detectedObjects[currentIndex].imageUrl}
-                alt={detectedObjects[currentIndex].label}
+                src={currentObject.imageUrl}
+                alt={currentObject.label}
                 objectFit="contain"
                 width="100%"
                 height="100%"
@@ -105,9 +116,27 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
                 color="white"
                 borderBottomRadius="md"
               >
-                <Text fontSize="lg" fontWeight="bold" textAlign="center">
-                  {detectedObjects[currentIndex].label}
-                </Text>
+                <VStack spacing={2} align="start">
+                  <Text fontSize="lg" fontWeight="bold">
+                    {currentObject.label}
+                  </Text>
+                  {currentObject.metadata?.brand && (
+                    <HStack>
+                      <Badge colorScheme="green">Brand</Badge>
+                      <Text>{currentObject.metadata.brand}</Text>
+                    </HStack>
+                  )}
+                  {currentObject.metadata?.title && (
+                    <HStack>
+                      <Badge colorScheme="purple">Title</Badge>
+                      <Text>{currentObject.metadata.title}</Text>
+                    </HStack>
+                  )}
+                  <HStack>
+                    <Badge colorScheme="orange">Confidence</Badge>
+                    <Text>{confidence}%</Text>
+                  </HStack>
+                </VStack>
               </Box>
             </Box>
             <IconButton
