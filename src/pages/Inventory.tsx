@@ -60,6 +60,7 @@ import SortableHandle from '../components/SortableHandle';
 import { useLocalization } from '../hooks/useLocalization';
 import { Language } from '../contexts/PreferencesContext';
 import { FileUpload } from '../components/FileUpload';
+import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
@@ -385,6 +386,8 @@ const Inventory = () => {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editItemData, setEditItemData] = useState<Partial<Item>>({});
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+  const [showDetectedObjects, setShowDetectedObjects] = useState(false);
+  const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -573,9 +576,14 @@ const Inventory = () => {
     }
   };
 
-  const handleImageUpload = (document: any) => {
+  const handleImageUpload = (result: any) => {
+    if (result.detectedObjects && result.detectedObjects.length > 0) {
+      setDetectedObjects(result.detectedObjects);
+      setShowDetectedObjects(true);
+    }
     toast({
       title: 'Image uploaded successfully',
+      description: `Detected ${result.detectedObjects?.length || 0} objects in the image`,
       status: 'success',
       duration: 2000,
     });
@@ -790,6 +798,13 @@ const Inventory = () => {
             </ModalFooter>
           </ModalContent>
         </Modal>
+
+        {/* Detected Objects Modal */}
+        <DetectedObjectsModal
+          isOpen={showDetectedObjects}
+          onClose={() => setShowDetectedObjects(false)}
+          detectedObjects={detectedObjects}
+        />
       </Container>
     </DndContext>
   );
