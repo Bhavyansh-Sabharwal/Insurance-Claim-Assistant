@@ -69,36 +69,38 @@ def analyze_detected_objects(detected_objects):
 def detect_objects():
     """Handle POST requests to detect objects in uploaded images.
     
-    This endpoint:
-    1. Validates the uploaded image file
-    2. Saves it temporarily
-    3. Processes it for object detection
-    4. Analyzes detected objects
-    5. Returns the analysis results
+    This endpoint accepts either:
+    1. A file upload with key 'image'
+    2. Base64 encoded image data in request.form['image']
     
     Returns:
         JSON: Detection results or error message with appropriate status code
     """
-    # Validate image file presence
-    if 'image' not in request.files:
-        error_msg = {'error': 'No image file provided'}
-        print(f"[/detect] Error: {error_msg}")
-        return jsonify(error_msg), 400
-    
-    file = request.files['image']
-    if file.filename == '':
-        error_msg = {'error': 'No selected file'}
-        print(f"[/detect] Error: {error_msg}")
-        return jsonify(error_msg), 400
-    
-    if not allowed_file(file.filename):
-        error_msg = {'error': 'Invalid file type'}
-        print(f"[/detect] Error: {error_msg}")
-        return jsonify(error_msg), 400
-    
     try:
-        # Read the image data directly from the request
-        image_data = file.read()
+        image_data = None
+        
+        # Check if we have a file upload
+        if 'image' in request.files:
+            file = request.files['image']
+            if file.filename == '':
+                return jsonify({'error': 'No selected file'}), 400
+            if not allowed_file(file.filename):
+                return jsonify({'error': 'Invalid file type'}), 400
+            image_data = file.read()
+        
+        # Check if we have base64 encoded image data
+        elif 'image' in request.form:
+            
+            encoded_data = request.form['image']
+            # Handle data URL format (e.g. data:image/jpeg;base64,/9j/4AAQ...)
+            if encoded_data.startswith('data:'):
+                encoded_data = encoded_data.split(',')[1]
+            try:
+                image_data = base64.b64decode(encoded_data)
+            except Exception:
+                return jsonify({'error': 'Invalid base64 image data'}), 400
+        else:
+            return jsonify({'error': 'No image data provided'}), 400
         
         # Process the image for object detection
         detected_objects = detect_and_crop_objects(image_data)
@@ -112,7 +114,6 @@ def detect_objects():
             'detected_objects': analyzed_objects
         }
         print(f"[/detect] Response: {response_data}")
-        print(jsonify(response_data))
         return jsonify(response_data)
         
     except Exception as e:
@@ -133,12 +134,12 @@ def analyze_image_endpoint():
         JSON: Analysis results or error message with appropriate status code
     """
     # Validate image file presence
-    if 'image' not in request.files:
+    if 'image' not in request.form:
         error_msg = {'error': 'No image file provided'}
         print(f"[/analyze] Error: {error_msg}")
         return jsonify(error_msg), 400
     
-    file = request.files['image']
+    file = request.form['image']
     if file.filename == '':
         error_msg = {'error': 'No selected file'}
         print(f"[/analyze] Error: {error_msg}")
@@ -166,7 +167,6 @@ def analyze_image_endpoint():
             'analysis': analysis
         }
         print(f"[/analyze] Response: {response_data}")
-        print(jsonify(response_data))
         return jsonify(response_data)
         
     except Exception as e:
