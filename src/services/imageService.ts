@@ -75,10 +75,15 @@ export const processAndUploadImage = async (
 
     // Send image to Python backend for object detection
     console.log(formData);
-    const detectionResponse = await fetch('/api/detect-objects', {
+    const api = 'http://localhost:4000';
+    const detectionResponse = await fetch(`${api}/detect`, {
       method: 'POST',
       body: formData
     });
+    // const detectionResponse = await fetch('/api/detect-objects', {
+    //   method: 'POST',
+    //   body: formData
+    // });
 
     if (!detectionResponse.ok) {
       throw new Error('Object detection failed');
