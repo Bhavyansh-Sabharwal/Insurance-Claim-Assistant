@@ -15,7 +15,7 @@ Survivors and claimants face the challenging task of documenting their losses fo
 ## Technology Stack
 
 ### Frontend
-- **React 18**: Modern UI development with functional components and hooks
+- **React 18**: Used for UI development with functional components and hooks
 - **TypeScript**: Type-safe development environment
 - **Chakra UI**: Accessible and customizable component library
 - **@dnd-kit**: Drag-and-drop functionality for intuitive inventory management
@@ -71,8 +71,9 @@ To run this project locally:
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Set up Firebase configuration
-4. Start the development server: `npm run dev`
+4. Set up .env file with all necessary API Keys
+5. Start the development server: `npm run dev`
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License for broad fair use.
