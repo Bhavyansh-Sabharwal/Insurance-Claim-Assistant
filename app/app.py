@@ -7,6 +7,7 @@ import base64
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
+from convert_image import url_to_base64
 
 # Add image-detection directory to Python path
 import sys
@@ -89,8 +90,14 @@ def detect_objects():
             image_data = file.read()
         
         # Check if we have base64 encoded image data
+        elif 'url' in request.form:
+            image_url = request.form['url']
+            try:
+                image_data = url_to_base64(image_url)
+            except Exception as e:
+                return jsonify({'error': f'Failed to process image URL: {str(e)}'}), 400    
+        
         elif 'image' in request.form:
-            
             encoded_data = request.form['image']
             # Handle data URL format (e.g. data:image/jpeg;base64,/9j/4AAQ...)
             if encoded_data.startswith('data:'):
