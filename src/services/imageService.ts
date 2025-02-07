@@ -69,16 +69,21 @@ export const processAndUploadImage = async (
     });
 
     // Prepare image data for object detection backend
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('image_url', mainImageUrl);
+    // const formData = new FormData();
+    // formData.append('image', file);
+    // formData.append('url', mainImageUrl);
+    const formData = {
+      url: mainImageUrl
+    };
 
     // Send image to Python backend for object detection
     console.log(formData);
-    const api = 'http://localhost:4000';
+
+
+    const api = 'http://127.0.0.1:4000';
     const detectionResponse = await fetch(`${api}/detect`, {
       method: 'POST',
-      body: formData
+      body: JSON.stringify(formData)
     });
     // const detectionResponse = await fetch('/api/detect-objects', {
     //   method: 'POST',
