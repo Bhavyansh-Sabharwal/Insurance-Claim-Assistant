@@ -17,7 +17,7 @@ def analyze_image(image_url):
         dict: Analysis results containing name, description, and estimated price
     """
     response = client.chat.completions.create(
-        model="llama-3.2-90b-vision-preview",
+        model="llama-3.3-70b-specdec",
         messages=[{
             "role": "user",
             "content": [
