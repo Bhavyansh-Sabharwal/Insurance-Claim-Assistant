@@ -4,8 +4,6 @@ from flask_cors import CORS
 import os
 import random
 import base64
-from werkzeug.utils import secure_filename
-from pathlib import Path
 from dotenv import load_dotenv
 from convert_image import url_to_base64
 import json
@@ -49,21 +47,35 @@ def analyze_detected_objects(detected_objects):
     analyzed_objects = []
 
     for obj in detected_objects:
-        analysis = analyze_image(obj['image_data'])
+        try:
+            analysis = analyze_image(obj['image_data'])
+            
+            # Extract price value, removing '$' if present
+            price_str = analysis.get('price', '$0').replace('$', '').replace(',', '')
+            try:
+                price = float(price_str)
+            except (ValueError, TypeError):
+                price = round(random.uniform(100, 500), 2)
 
-        # Generate random price if not available or invalid
-        price = analysis.get('price', 0)
-        if not price or price <= 0:
-            price = round(random.random() * 500)
-
-        analyzed_objects.append({
-            'label': obj['label'],
-            'confidence': obj['confidence'],
-            'image_url': obj['image_data'],
-            'name': analysis.get('name', 'Unknown Item'),
-            'description': analysis.get('description', 'No description available'),
-            'estimated_price': price
-        })
+            analyzed_objects.append({
+                'label': obj['label'],
+                'confidence': obj['confidence'],
+                'image_url': obj['image_data'],
+                'name': analysis.get('name', obj['label'].capitalize()),
+                'description': analysis.get('description', f'A {obj["label"]}'),
+                'estimated_price': f'${price:.2f}'
+            })
+        except Exception as e:
+            print(f"Error analyzing object: {str(e)}")
+            # Add a fallback object if analysis fails
+            analyzed_objects.append({
+                'label': obj['label'],
+                'confidence': obj['confidence'],
+                'image_url': obj['image_data'],
+                'name': obj['label'].capitalize(),
+                'description': f'A {obj["label"]}',
+                'estimated_price': f'${round(random.uniform(100, 500), 2):.2f}'
+            })
 
     return analyzed_objects
 

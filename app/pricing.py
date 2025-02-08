@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -26,4 +27,9 @@ def analyze_image(image_url):
         max_tokens=3000
     )
     
-    return eval(response.choices[0].message.content)
+    content = response.choices[0].message.content.strip()
+    try:
+        result = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Failed to parse JSON from response: {error}\nContent received: {content}")
+    return result
