@@ -26,13 +26,16 @@ def detect_and_crop_objects(input_data):
     Returns:
         list: List of dictionaries containing object label, confidence, and base64 image
     """
-    # Handle input data
+    # Convert input_data to bytes if it's a string (likely base64)
     if isinstance(input_data, str):
-        # Read local file
-        with open(input_data, 'rb') as f:
-            image_data = f.read()
+        if input_data.startswith('data:'):
+            # Handle data URL format
+            image_data = base64.b64decode(input_data.split(',')[1])
+        else:
+            # Assume it's a base64 string
+            image_data = base64.b64decode(input_data)
     else:
-        # Use provided binary data
+        # Already in bytes format
         image_data = input_data
     
     # Convert to OpenCV format

@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 from pathlib import Path
 from dotenv import load_dotenv
 from convert_image import url_to_base64
+import json
 
 # Add image-detection directory to Python path
 import sys
@@ -113,10 +114,11 @@ def detect_objects():
             return jsonify({'error': 'No image data provided'}), 400
 
         # Process the image for object detection
+        print("HERE")
         detected_objects = detect_and_crop_objects(image_data)
-
-        # Analyze each detected object
+        print("Detected objects:", json.dumps(detected_objects)[:200])  # Print first 200 chars to avoid flooding logs
         analyzed_objects = analyze_detected_objects(detected_objects)
+        print("HERE3")
 
         # Prepare and return successful response
         response_data = {
@@ -127,7 +129,7 @@ def detect_objects():
         return jsonify(response_data)
 
     except Exception as e:
-        error_response = {'error': str(e)}
+        error_response = {'error': str(e)[:100]}
         print(f"[/detect] Error: {error_response}")
         return jsonify(error_response), 500
 
