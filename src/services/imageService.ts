@@ -127,6 +127,7 @@ export const processAndUploadImage = async (
         name: object.name,
         confidence: object.confidence,
         imageUrl: object.image_url,
+
         price: object.estimated_price,
         description: object.description
       };
@@ -160,3 +161,4 @@ export const processAndUploadImage = async (
     throw error;
   }
 };
+
