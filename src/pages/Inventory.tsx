@@ -62,6 +62,7 @@ import { Language } from '../contexts/PreferencesContext';
 import { FileUpload } from '../components/FileUpload';
 import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
 import { generatePDF } from '../components/InventoryPDF';
+import { DetectedObject } from '../services/imageService';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
@@ -399,7 +400,7 @@ const Inventory = () => {
   const [editItemData, setEditItemData] = useState<Partial<Item>>({});
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
-  const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
+  const [detectedObjects, setDetectedObjects] = useState<DetectedObject[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
