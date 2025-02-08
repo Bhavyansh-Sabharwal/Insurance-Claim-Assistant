@@ -13,26 +13,36 @@ import {
   Text,
   Box,
   Badge,
-  useColorModeValue
+  useColorModeValue,
+  useToast
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 // import { useLocalization } from '../hooks/useLocalization';
 import { DetectedObject } from '../services/imageService';
+import { Item } from '../types/inventory';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 interface DetectedObjectsModalProps {
   isOpen: boolean;
   onClose: () => void;
   detectedObjects: DetectedObject[];
+  selectedRoomId?: string;
+  onObjectAdded?: (item: Item) => void;
 }
 
 export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   isOpen,
   onClose,
-  detectedObjects
+  detectedObjects,
+  selectedRoomId,
+  onObjectAdded
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [savedObjects, setSavedObjects] = useState<Set<number>>(new Set());
   const buttonBgColor = useColorModeValue('blackAlpha.700', 'whiteAlpha.700');
   const buttonIconColor = useColorModeValue('white', 'black');
+  const toast = useToast();
   // const { formatCurrency } = useLocalization();
 
   const handlePrevious = () => {
@@ -56,7 +66,69 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   if (!detectedObjects.length) return null;
 
   const currentObject = detectedObjects[currentIndex];
-  const description = currentObject.description || `A ${currentObject.label.toLowerCase()}`;
+  const fallbackDescription = `A ${currentObject.label.toLowerCase()}`;
+  const remainingObjects = detectedObjects.length - savedObjects.size;
+
+  const handleAddToInventory = async () => {
+    if (!selectedRoomId) {
+      toast({
+        title: 'Error',
+        description: 'Please select a room first',
+        status: 'error',
+        duration: 3000
+      });
+      return;
+    }
+
+    const newItem: Item = {
+      id: Date.now().toString(),
+      name: currentObject.name || currentObject.label,
+      description: currentObject.description || `A ${currentObject.label.toLowerCase()}`,
+      estimatedValue: parseFloat(currentObject.price?.replace(/[^0-9.]/g, '') || '0'),
+      room: selectedRoomId,
+      category: 'inventory.categories.other'
+    };
+
+    try {
+      const roomRef = doc(db, 'rooms', selectedRoomId);
+      const roomSnapshot = await getDoc(roomRef);
+      const currentItems = roomSnapshot.data()?.items || [];
+      
+      await updateDoc(roomRef, {
+        items: [...currentItems, newItem]
+      });
+
+      onObjectAdded?.(newItem);
+      
+      // Add current index to saved objects
+      const newSavedObjects = new Set(savedObjects);
+      newSavedObjects.add(currentIndex);
+      setSavedObjects(newSavedObjects);
+
+      toast({
+        title: 'Success',
+        description: 'Item added to inventory',
+        status: 'success',
+        duration: 2000
+      });
+
+      // If there are more unsaved objects, move to the next unsaved one
+      if (newSavedObjects.size < detectedObjects.length) {
+        let nextIndex = (currentIndex + 1) % detectedObjects.length;
+        while (newSavedObjects.has(nextIndex)) {
+          nextIndex = (nextIndex + 1) % detectedObjects.length;
+        }
+        setCurrentIndex(nextIndex);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to inventory',
+        status: 'error',
+        duration: 3000
+      });
+    }
+  };
 
   return (
     <Modal
@@ -70,9 +142,14 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
         <ModalHeader>
           <Flex justify="space-between" align="center">
             <Text>Detected Objects</Text>
-            <Badge colorScheme="blue" bg="blue.100" color="blue.800">
-              {currentIndex + 1} OF {detectedObjects.length}
-            </Badge>
+            <Flex gap={2} align="center">
+              <Text fontSize="sm" color="gray.500">
+                {remainingObjects} object{remainingObjects !== 1 ? 's' : ''} remaining
+              </Text>
+              <Badge colorScheme="blue" bg="blue.100" color="blue.800">
+                {currentIndex + 1} OF {detectedObjects.length}
+              </Badge>
+            </Flex>
           </Flex>
         </ModalHeader>
         <ModalBody p={0} position="relative">
@@ -135,21 +212,35 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
             <Text fontSize="2xl" fontWeight="semibold" mb={2}>
               {currentObject.name}
             </Text>
-            <Text color="gray.600" mb={4}>
-              {description}
+            <Text color="gray.600" mb={4} lineHeight="tall">
+              {currentObject.description || fallbackDescription}
             </Text>
             <Text color="green.600" fontSize="md">
-              Estimated Value: {currentObject.price}
+              Estimated Value: {currentObject.price || 'Not available'}
             </Text>
             <Text color="gray.500" fontSize="sm" mt={2}>
               Confidence Score: {(currentObject.confidence * 100).toFixed(1)}%
             </Text>
+            {savedObjects.has(currentIndex) && (
+              <Badge colorScheme="green" mt={2}>
+                Added to Inventory
+              </Badge>
+            )}
           </Box>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={onClose} colorScheme="blue">
-            Close
-          </Button>
+          <Flex gap={2}>
+            <Button 
+              colorScheme="blue"
+              onClick={handleAddToInventory}
+              isDisabled={!selectedRoomId || savedObjects.has(currentIndex)}
+            >
+              {savedObjects.has(currentIndex) ? 'Already Added' : 'Add to Inventory'}
+            </Button>
+            <Button onClick={onClose}>
+              {remainingObjects === 0 ? 'Done' : 'Close'}
+            </Button>
+          </Flex>
         </ModalFooter>
       </ModalContent>
     </Modal>
