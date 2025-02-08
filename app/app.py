@@ -49,7 +49,7 @@ def analyze_detected_objects(detected_objects):
     for obj in detected_objects:
         try:
             analysis = analyze_image(obj['image_data'])
-            
+
             # Extract price value, removing '$' if present
             price_str = analysis.get('price', '$0').replace('$', '').replace(',', '')
             try:
@@ -71,7 +71,7 @@ def analyze_detected_objects(detected_objects):
             analyzed_objects.append({
                 'label': obj['label'],
                 'confidence': obj['confidence'],
-                'image_url': obj['image_data'],
+                # 'image_url': obj['image_data'],
                 'name': obj['label'].capitalize(),
                 'description': f'A {obj["label"]}',
                 'estimated_price': f'${round(random.uniform(100, 500), 2):.2f}'
@@ -110,7 +110,7 @@ def detect_objects():
             'success': True,
             'detected_objects': analyzed_objects
         }
-        print(f"[/detect] Response: {response_data}")
+        print(f"[/detect] Response: {str(response_data)[:100]}")
         return jsonify(response_data)
 
     except Exception as e:
