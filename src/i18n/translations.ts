@@ -1,6 +1,6 @@
 import { Language } from '../contexts/PreferencesContext';
 
-export type TranslationKey = 
+export type TranslationKey =
   | 'setup.basicInfo'
   | 'setup.roomSetup'
   | 'setup.language'
@@ -265,7 +265,7 @@ export const translations: Translations = {
     'inventory.addImage': 'Add Image',
     'inventory.uploadImage': 'Upload Image',
     'button.close': 'Close',
-    'inventory.downloadPDF': 'Download PDF',
+    'inventory.downloadPDF': 'Download PDF Summary',
     'inventory.pdfDownloaded': 'PDF downloaded successfully',
     'inventory.totalValue': 'Total Value',
     'error.pdfGenerationFailed': 'Failed to generate PDF',
@@ -794,4 +794,4 @@ export const translations: Translations = {
     'inventory.totalValue': 'कुल मूल्य',
     'error.pdfGenerationFailed': 'PDF उत्पन्न विफल हुआ',
   },
-}; 
+};

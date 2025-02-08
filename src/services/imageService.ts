@@ -27,12 +27,12 @@ interface ImageUploadResult {
 
 /**
  * Processes and uploads an image file, performs object detection, and analyzes pricing
- * 
+ *
  * @param userId - The ID of the user uploading the image
  * @param itemId - The ID of the inventory item associated with the image
  * @param file - The image file to be processed
  * @returns Promise resolving to ImageUploadResult containing processing results
- * 
+ *
  * The function performs the following steps:
  * 1. Uploads the original image to Firebase Storage
  * 2. Stores image metadata in Firestore
@@ -50,8 +50,8 @@ export const processAndUploadImage = async (
   try {
     // Create a unique folder path for this upload using timestamp
     const timestamp = Date.now();
-    const folderPath = `users/${userId}/items/${itemId}/images/${timestamp}`;
-    
+    const folderPath = `users/${userId}/${itemId}/${timestamp}`;
+
     // Upload the original image to Firebase Storage
     const mainImageRef = ref(storage, `${folderPath}/main.jpg`);
     await uploadBytes(mainImageRef, file);
@@ -74,11 +74,10 @@ export const processAndUploadImage = async (
     formData.append('image_url', mainImageUrl);
 
     // Send image to Python backend for object detection
-
+    console.log(formData);
     const detectionResponse = await fetch('/api/detect-objects', {
       method: 'POST',
       body: formData
-
     });
 
     if (!detectionResponse.ok) {
