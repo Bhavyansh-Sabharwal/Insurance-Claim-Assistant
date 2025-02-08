@@ -18,7 +18,7 @@ def analyze_image(image_url):
         dict: Analysis results containing name, description, and estimated price
     """
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[{
             "role": "user",
             "content": [
