@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -44,6 +44,21 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   const buttonIconColor = useColorModeValue('white', 'black');
   const toast = useToast();
   // const { formatCurrency } = useLocalization();
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(0);
+      setSavedObjects(new Set());
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    // Only close if all objects have been processed or user explicitly closes
+    if (remainingObjects === 0) {
+      onClose();
+    }
+  };
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? detectedObjects.length - 1 : prev - 1));
@@ -129,7 +144,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
       });
 
       // Move to next unsaved object if there are any remaining
-      if (newSavedObjects.size < detectedObjects.length) {
+      const remainingAfterSave = detectedObjects.length - newSavedObjects.size;
+      if (remainingAfterSave > 0) {
         moveToNextUnsavedObject();
       }
     } catch (error) {
@@ -148,6 +164,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
       onClose={onClose}
       size="2xl"
       isCentered
+      closeOnOverlayClick={false}
+      closeOnEsc={false}
     >
       <ModalOverlay />
       <ModalContent onKeyDown={handleKeyDown}>

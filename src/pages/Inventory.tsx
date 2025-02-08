@@ -870,7 +870,6 @@ const Inventory = () => {
               setRooms(updatedRooms);
               setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, item] });
             }
-            setShowDetectedObjects(false);
           }}
         />
       </Container>
