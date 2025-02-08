@@ -48,7 +48,7 @@ def analyze_detected_objects(detected_objects):
     for obj in detected_objects:
         print(f"OBJ ++++++++++++++++++++++++++ \n {obj} ")
         try:
-                analysis = analyze_image(obj['image_data'])
+            analysis = analyze_image(obj['image_data'])
             
             # Extract price value, removing '$' if present
             price_str = analysis.get('price', '$0').replace('$', '').replace(',', '')

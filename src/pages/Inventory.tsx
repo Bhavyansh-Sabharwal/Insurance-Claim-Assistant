@@ -858,7 +858,7 @@ const Inventory = () => {
         <DetectedObjectsModal
           isOpen={showDetectedObjects}
           onClose={() => setShowDetectedObjects(false)}
-          detectedObjects={detectedObjects}
+          detectedObjects={detectedObjects as any}
           selectedRoomId={selectedRoom?.id}
           onObjectAdded={(item) => {
             if (selectedRoom) {
