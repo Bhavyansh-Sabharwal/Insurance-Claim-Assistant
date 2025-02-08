@@ -71,7 +71,7 @@ def analyze_detected_objects(detected_objects):
             analyzed_objects.append({
                 'label': obj['label'],
                 'confidence': obj['confidence'],
-                # 'image_url': obj['image_data'],
+                'image_url': obj['image_data'],
                 'name': obj['label'].capitalize(),
                 'description': f'A {obj["label"]}',
                 'estimated_price': f'${round(random.uniform(100, 500), 2):.2f}'

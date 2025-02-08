@@ -99,33 +99,34 @@ export const processAndUploadImage = async (
 
     const detectionResult = await detectionResponse.json();
     const detectedObjects: DetectedObject[] = [];
+    console.log(detectionResult)
 
     // Process each detected object from the response
-    for (const object of detectionResult.objects) {
+    for (const object of detectionResult.detected_objects) {
       // Upload the cropped object image to Firebase
-      const objectImageRef = ref(storage, `${folderPath}/object_${object.label}.jpg`);
-      const objectImageBlob = await fetch(object.image_url).then(r => r.blob());
-      await uploadBytes(objectImageRef, objectImageBlob);
-      const objectImageUrl = await getDownloadURL(objectImageRef);
+      // const objectImageRef = ref(storage, `${folderPath}/object_${object.label}.jpg`);
+      // const objectImageBlob = await fetch(object.image_url).then(r => r.blob());
+      // await uploadBytes(objectImageRef, objectImageBlob);
+      // const objectImageUrl = await getDownloadURL(objectImageRef);
 
-      // Get pricing analysis for the detected object
-      const pricingResponse = await fetch('/api/analyze-price', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ image_url: objectImageUrl })
-      });
+      // // Get pricing analysis for the detected object
+      // const pricingResponse = await fetch('/api/analyze-price', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   },
+      //   body: JSON.stringify({ image_url: objectImageUrl })
+      // });
 
-      const pricingResult = await pricingResponse.json();
+      // const pricingResult = await pricingResponse.json();
 
       // Create detected object metadata
       const detectedObject: DetectedObject = {
         label: object.label,
         confidence: object.confidence,
-        imageUrl: objectImageUrl,
-        price: pricingResult.price,
-        description: pricingResult.description
+        imageUrl: object.image_url,
+        price: object.estimated_price,
+        description: object.description
       };
 
       detectedObjects.push(detectedObject);
@@ -134,14 +135,14 @@ export const processAndUploadImage = async (
       await setDoc(doc(collection(db, 'photos')), {
         userId,
         itemId,
-        imageUrl: objectImageUrl,
+        imageUrl: object.image_url,
         folderPath,
         timestamp: new Date(),
         type: 'detected',
         label: object.label,
         confidence: object.confidence,
-        price: pricingResult.price,
-        description: pricingResult.description
+        price: object.estimated_price,
+        description: object.description
       });
     }
 
