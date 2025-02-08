@@ -858,11 +858,20 @@ const Inventory = () => {
         <DetectedObjectsModal
           isOpen={showDetectedObjects}
           onClose={() => setShowDetectedObjects(false)}
-          detectedObjects={detectedObjects.map(obj => ({
-            ...obj,
-            description: '',
-            estimated_price: 0
-          }))}
+          detectedObjects={detectedObjects}
+          selectedRoomId={selectedRoom?.id}
+          onObjectAdded={(item) => {
+            if (selectedRoom) {
+              const updatedRooms = rooms.map(room =>
+                room.id === selectedRoom.id
+                  ? { ...room, items: [...room.items, item] }
+                  : room
+              );
+              setRooms(updatedRooms);
+              setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, item] });
+            }
+            setShowDetectedObjects(false);
+          }}
         />
       </Container>
     </DndContext>
