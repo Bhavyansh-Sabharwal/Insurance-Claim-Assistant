@@ -8,10 +8,10 @@ client = OpenAI(api_key=os.getenv('OPENAI_API'))
 
 def analyze_image(image_url):
     """Analyze an image using OpenAI's Vision API to identify objects and estimate prices.
-    
+
     Args:
         image_url (str): URL or file path of the image to analyze
-        
+
     Returns:
         dict: Analysis results containing name, description, and estimated price
     """
@@ -26,8 +26,9 @@ def analyze_image(image_url):
         }],
         max_tokens=3000
     )
-    
-    content = response.choices[0].message.content.strip()
+
+    content = str(response.choices[0].message.content).strip()
+    content = '\n'.join(content.split('\n')[1:-1])
     try:
         result = json.loads(content)
     except json.JSONDecodeError as error:

@@ -9,7 +9,7 @@ import {
   Spinner,
   Center
 } from '@chakra-ui/react';
-import { processAndUploadImage } from '../services/imageService';
+import { DetectedObject, processAndUploadImage } from '../services/imageService';
 import { DetectedObjectsModal } from './DetectedObjectsModal';
 
 interface FileUploadProps {
@@ -20,7 +20,7 @@ interface FileUploadProps {
 
 /**
  * FileUpload Component
- * 
+ *
  * A reusable component that handles image file uploads with object detection capabilities.
  * Provides drag-and-drop functionality and displays upload progress and detected objects.
  */
@@ -35,7 +35,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
-  const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
+  const [detectedObjects, setDetectedObjects] = useState<Array<DetectedObject>>([]);
 
   /**
    * Handles file drop events and processes uploaded images
@@ -57,20 +57,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       // Set upload state and show progress
       setIsUploading(true);
       setUploadProgress('Uploading image...');
-      
+
       try {
         // Process image and detect objects
         setUploadProgress('Processing image and detecting objects...');
         const result = await processAndUploadImage(userId, itemId, file);
-        
+
         // Transform detected objects for the modal display
-        const objects = result.detectedObjects.map(obj => ({
-          label: obj.label,
-          imageUrl: obj.imageUrl
-        }));
-        
+        const objects = result.detectedObjects;
+
         setDetectedObjects(objects);
-        
+
         // Show success message based on detection results
         if (objects.length > 0) {
           setShowDetectedObjects(true);
@@ -88,7 +85,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             duration: 5000,
           });
         }
-        
+
         onUploadComplete(result);
       } catch (error) {
         console.error('Upload error:', error);

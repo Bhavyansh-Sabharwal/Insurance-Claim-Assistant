@@ -7,12 +7,13 @@ import { doc, setDoc, collection } from 'firebase/firestore';
  * Contains information about the object's label, confidence score,
  * associated image URL, and optional pricing/description details
  */
-interface DetectedObject {
+export interface DetectedObject {
   label: string;          // Object classification label
+  name: string;
   confidence: number;      // Detection confidence score (0-1)
   imageUrl: string;       // URL to the cropped object image
-  price?: string;         // Optional estimated price
-  description?: string;   // Optional object description
+  price: string;         // Optional estimated price
+  description: string;   // Optional object description
 }
 
 /**
@@ -123,11 +124,13 @@ export const processAndUploadImage = async (
       // Create detected object metadata
       const detectedObject: DetectedObject = {
         label: object.label,
+        name: object.name,
         confidence: object.confidence,
         imageUrl: object.image_url,
         price: object.estimated_price,
         description: object.description
       };
+      console.log(detectedObject)
 
       detectedObjects.push(detectedObject);
 
