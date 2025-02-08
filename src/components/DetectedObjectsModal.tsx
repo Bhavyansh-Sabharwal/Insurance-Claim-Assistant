@@ -13,7 +13,6 @@ import {
   Text,
   Box,
   Badge,
-  VStack,
   useColorModeValue
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
@@ -32,9 +31,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   detectedObjects
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const arrowBgColor = useColorModeValue('blackAlpha.700', 'whiteAlpha.700');
-  const arrowHoverColor = useColorModeValue('blackAlpha.800', 'whiteAlpha.800');
-  const arrowIconColor = useColorModeValue('white', 'black');
+  const buttonBgColor = useColorModeValue('blackAlpha.700', 'whiteAlpha.700');
+  const buttonIconColor = useColorModeValue('white', 'black');
   // const { formatCurrency } = useLocalization();
 
   const handlePrevious = () => {
@@ -45,7 +43,6 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
     setCurrentIndex((prev) => (prev === detectedObjects.length - 1 ? 0 : prev + 1));
   };
 
-  // Handle keyboard navigation
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowLeft') {
       handlePrevious();
@@ -59,88 +56,98 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   if (!detectedObjects.length) return null;
 
   const currentObject = detectedObjects[currentIndex];
-  console.log("Current object in modal:", currentObject);
+  const description = currentObject.description || `A ${currentObject.label.toLowerCase()}`;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size="6xl"
+      size="2xl"
       isCentered
     >
       <ModalOverlay />
-      <ModalContent onKeyDown={handleKeyDown} maxH="90vh">
+      <ModalContent onKeyDown={handleKeyDown}>
         <ModalHeader>
           <Flex justify="space-between" align="center">
-            <Text fontSize="2xl" fontWeight="bold">Detected Objects</Text>
-            <Badge colorScheme="blue" fontSize="md" px={3} py={1} borderRadius="full">
-              {currentIndex + 1} of {detectedObjects.length}
+            <Text>Detected Objects</Text>
+            <Badge colorScheme="blue" bg="blue.100" color="blue.800">
+              {currentIndex + 1} OF {detectedObjects.length}
             </Badge>
           </Flex>
         </ModalHeader>
-        <ModalBody>
-          <Flex direction="column" gap={6}>
-            <Flex justify="center" align="center" position="relative" minH="500px">
-              <IconButton
-                aria-label="Previous image"
-                icon={<ChevronLeftIcon boxSize={8} color={arrowIconColor} />}
-                position="absolute"
-                left={4}
-                onClick={handlePrevious}
-                zIndex={2}
-                size="lg"
-                isRound
-                bg={arrowBgColor}
-                _hover={{ bg: arrowHoverColor, transform: 'scale(1.1)' }}
-                transition="all 0.2s"
-                boxShadow="lg"
-              />
-              <Box width="100%" height="500px" position="relative">
-                <Image
-                  src={currentObject.imageUrl}
-                  alt={currentObject.label}
-                  objectFit="contain"
-                  width="100%"
-                  height="100%"
-                  borderRadius="md"
-                />
-              </Box>
-              <IconButton
-                aria-label="Next image"
-                icon={<ChevronRightIcon boxSize={8} color={arrowIconColor} />}
-                position="absolute"
-                right={4}
-                onClick={handleNext}
-                zIndex={2}
-                size="lg"
-                isRound
-                bg={arrowBgColor}
-                _hover={{ bg: arrowHoverColor, transform: 'scale(1.1)' }}
-                transition="all 0.2s"
-                boxShadow="lg"
+        <ModalBody p={0} position="relative">
+          <Box 
+            position="relative" 
+            width="100%" 
+            paddingTop="75%" // 4:3 aspect ratio
+            bg="gray.50"
+          >
+            <Flex
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              align="center"
+              justify="center"
+            >
+              <Image
+                src={currentObject.imageUrl}
+                alt={currentObject.label}
+                objectFit="contain"
+                w="100%"
+                h="100%"
+                p={4}
               />
             </Flex>
-            
-            <VStack spacing={4} align="start" width="100%" px={4}>
-              <Box width="100%">
-                <Text fontSize="2xl" fontWeight="bold" mb={2}>
-                  {currentObject.name}
-                </Text>
-                <Text fontSize="lg" color="gray.600" lineHeight="tall" mb={4}>
-                  {currentObject.description}
-                </Text>
-                <Text fontSize="xl" color="green.600" fontWeight="semibold">
-                  Estimated Value: {currentObject.price}
-                </Text>
-                <Text fontSize="sm" color="gray.500" mt={2}>
-                  Confidence Score: {(currentObject.confidence * 100).toFixed(1)}%
-                </Text>
-              </Box>
-            </VStack>
-          </Flex>
+            <IconButton
+              aria-label="Previous image"
+              icon={<ChevronLeftIcon boxSize={6} color={buttonIconColor} />}
+              position="absolute"
+              left={4}
+              top="50%"
+              transform="translateY(-50%)"
+              onClick={handlePrevious}
+              zIndex={2}
+              size="md"
+              isRound
+              bg={buttonBgColor}
+              _hover={{ bg: buttonBgColor, transform: 'scale(1.1)' }}
+              transition="transform 0.2s"
+            />
+            <IconButton
+              aria-label="Next image"
+              icon={<ChevronRightIcon boxSize={6} color={buttonIconColor} />}
+              position="absolute"
+              right={4}
+              top="50%"
+              transform="translateY(-50%)"
+              onClick={handleNext}
+              zIndex={2}
+              size="md"
+              isRound
+              bg={buttonBgColor}
+              _hover={{ bg: buttonBgColor, transform: 'scale(1.1)' }}
+              transition="transform 0.2s"
+            />
+          </Box>
+          <Box p={6}>
+            <Text fontSize="2xl" fontWeight="semibold" mb={2}>
+              {currentObject.name}
+            </Text>
+            <Text color="gray.600" mb={4}>
+              {description}
+            </Text>
+            <Text color="green.600" fontSize="md">
+              Estimated Value: {currentObject.price}
+            </Text>
+            <Text color="gray.500" fontSize="sm" mt={2}>
+              Confidence Score: {(currentObject.confidence * 100).toFixed(1)}%
+            </Text>
+          </Box>
         </ModalBody>
         <ModalFooter>
-          <Button size="lg" onClick={onClose} colorScheme="blue">
+          <Button onClick={onClose} colorScheme="blue">
             Close
           </Button>
         </ModalFooter>
