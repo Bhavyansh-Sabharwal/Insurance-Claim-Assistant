@@ -590,7 +590,15 @@ const Inventory = () => {
 
   const handleImageUpload = (result: any) => {
     if (result.detectedObjects && result.detectedObjects.length > 0) {
-      setDetectedObjects(result.detectedObjects);
+      const transformedObjects = result.detectedObjects.map((obj: any) => ({
+        label: obj.label,
+        name: obj.label,  // Using label as name since it's not provided
+        confidence: obj.confidence || 1.0,
+        imageUrl: obj.image_url,
+        price: '',  // Empty string as it's not provided
+        description: `A ${obj.label.toLowerCase()}`  // Basic description
+      }));
+      setDetectedObjects(transformedObjects);
       setShowDetectedObjects(true);
     }
     toast({
