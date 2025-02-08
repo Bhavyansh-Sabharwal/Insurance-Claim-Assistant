@@ -174,3 +174,16 @@ def analyze_image_endpoint():
 # Start the Flask server if running directly
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=True)
+
+# For Vercel deployment
+app = app
+
+# Configure base URL for API endpoints
+if os.environ.get('VERCEL_ENV'):
+    BASE_URL = '/api'
+else:
+    BASE_URL = ''
+
+# Update route paths for Vercel deployment
+app.url_map.strict_slashes = False
+app.config['APPLICATION_ROOT'] = BASE_URL
