@@ -53,6 +53,22 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
     setCurrentIndex((prev) => (prev === detectedObjects.length - 1 ? 0 : prev + 1));
   };
 
+  const moveToNextUnsavedObject = () => {
+    let nextIndex = (currentIndex + 1) % detectedObjects.length;
+    while (savedObjects.has(nextIndex) && nextIndex !== currentIndex) {
+      nextIndex = (nextIndex + 1) % detectedObjects.length;
+    }
+    setCurrentIndex(nextIndex);
+  };
+
+  const handleSkip = () => {
+    if (remainingObjects > 0) {
+      moveToNextUnsavedObject();
+    } else {
+      onClose();
+    }
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'ArrowLeft') {
       handlePrevious();
@@ -112,13 +128,9 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
         duration: 2000
       });
 
-      // If there are more unsaved objects, move to the next unsaved one
+      // Move to next unsaved object if there are any remaining
       if (newSavedObjects.size < detectedObjects.length) {
-        let nextIndex = (currentIndex + 1) % detectedObjects.length;
-        while (newSavedObjects.has(nextIndex)) {
-          nextIndex = (nextIndex + 1) % detectedObjects.length;
-        }
-        setCurrentIndex(nextIndex);
+        moveToNextUnsavedObject();
       }
     } catch (error) {
       toast({
@@ -237,8 +249,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
             >
               {savedObjects.has(currentIndex) ? 'Already Added' : 'Add to Inventory'}
             </Button>
-            <Button onClick={onClose}>
-              {remainingObjects === 0 ? 'Done' : 'Close'}
+            <Button onClick={handleSkip}>
+              {remainingObjects === 0 ? 'Done' : 'Skip'}
             </Button>
           </Flex>
         </ModalFooter>
