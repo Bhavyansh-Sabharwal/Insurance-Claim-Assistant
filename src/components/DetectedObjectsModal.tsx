@@ -16,14 +16,8 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
-import { useLocalization } from '../hooks/useLocalization';
-
-interface DetectedObject {
-  label: string;
-  imageUrl: string;
-  description: string;
-  estimated_price: number;
-}
+// import { useLocalization } from '../hooks/useLocalization';
+import { DetectedObject } from '../services/imageService';
 
 interface DetectedObjectsModalProps {
   isOpen: boolean;
@@ -37,7 +31,7 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   detectedObjects
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { formatCurrency } = useLocalization();
+  // const { formatCurrency } = useLocalization();
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? detectedObjects.length - 1 : prev - 1));
@@ -57,13 +51,13 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
       onClose();
     }
   };
-
+  // console.log(detectedObjects.map(obj => obj));
   if (!detectedObjects.length) return null;
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       size="2xl"
       isCentered
     >
@@ -101,13 +95,13 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
               />
               <VStack spacing={2} mt={4} align="start" width="100%">
                 <Text fontSize="lg" fontWeight="bold">
-                  {detectedObjects[currentIndex].label}
+                  {detectedObjects[currentIndex].name}
                 </Text>
-                <Text color="gray.600">
+                <Text fontSize="lg" color="gray.600">
                   {detectedObjects[currentIndex].description}
                 </Text>
                 <Text fontSize="lg" color="green.600" fontWeight="semibold">
-                  Estimated Value: {formatCurrency(detectedObjects[currentIndex].estimated_price)}
+                  Estimated Value: {detectedObjects[currentIndex].price}
                 </Text>
               </VStack>
             </Box>
