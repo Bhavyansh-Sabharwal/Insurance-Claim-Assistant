@@ -83,35 +83,8 @@ def detect_objects():
         json_s = request.get_json()
         print(json_s)
 
-        # Check if we have a file upload
-        if 'image' in request.files:
-            file = request.files['image']
-            if file.filename == '':
-                return jsonify({'error': 'No selected file'}), 400
-            if not allowed_file(file.filename):
-                return jsonify({'error': 'Invalid file type'}), 400
-            image_data = file.read()
-
-        # Check if we have base64 encoded image data
-        elif 'url' in request.form or 'url' in json_s:
-            # image_url = request.form['url']
-            image_url = json_s['url']
-            try:
-                image_data = url_to_base64(image_url)
-            except Exception as e:
-                return jsonify({'error': f'Failed to process image URL: {str(e)}'}), 400
-
-        elif 'image' in request.form:
-            encoded_data = request.form['image']
-            # Handle data URL format (e.g. data:image/jpeg;base64,/9j/4AAQ...)
-            if encoded_data.startswith('data:'):
-                encoded_data = encoded_data.split(',')[1]
-            try:
-                image_data = base64.b64decode(encoded_data)
-            except Exception:
-                return jsonify({'error': 'Invalid base64 image data'}), 400
-        else:
-            return jsonify({'error': 'No image data provided'}), 400
+        image_url = json_s['url']
+        image_data = url_to_base64(image_url)
 
         # Process the image for object detection
         print("HERE")

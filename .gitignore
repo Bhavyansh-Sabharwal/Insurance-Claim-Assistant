@@ -15,6 +15,8 @@ build/
 .vscode/
 *.swp
 *.swo
+*.pyc
+__pycache__/
 
 # Logs
 npm-debug.log*
