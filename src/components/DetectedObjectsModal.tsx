@@ -13,7 +13,8 @@ import {
   Text,
   Box,
   Badge,
-  VStack
+  VStack,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 // import { useLocalization } from '../hooks/useLocalization';
@@ -31,6 +32,9 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   detectedObjects
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const arrowBgColor = useColorModeValue('blackAlpha.700', 'whiteAlpha.700');
+  const arrowHoverColor = useColorModeValue('blackAlpha.800', 'whiteAlpha.800');
+  const arrowIconColor = useColorModeValue('white', 'black');
   // const { formatCurrency } = useLocalization();
 
   const handlePrevious = () => {
@@ -54,73 +58,91 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
   // console.log(detectedObjects.map(obj => obj));
   if (!detectedObjects.length) return null;
 
+  const currentObject = detectedObjects[currentIndex];
+  console.log("Current object in modal:", currentObject);
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size="2xl"
+      size="6xl"
       isCentered
     >
       <ModalOverlay />
-      <ModalContent onKeyDown={handleKeyDown}>
+      <ModalContent onKeyDown={handleKeyDown} maxH="90vh">
         <ModalHeader>
           <Flex justify="space-between" align="center">
-            <Text>Detected Objects</Text>
-            <Badge colorScheme="blue">
+            <Text fontSize="2xl" fontWeight="bold">Detected Objects</Text>
+            <Badge colorScheme="blue" fontSize="md" px={3} py={1} borderRadius="full">
               {currentIndex + 1} of {detectedObjects.length}
             </Badge>
           </Flex>
         </ModalHeader>
         <ModalBody>
-          <Flex justify="center" align="center" position="relative" minH="400px">
-            <IconButton
-              aria-label="Previous image"
-              icon={<ChevronLeftIcon boxSize={8} />}
-              position="absolute"
-              left={2}
-              onClick={handlePrevious}
-              zIndex={2}
-              variant="ghost"
-              size="lg"
-              isRound
-              _hover={{ bg: 'blackAlpha.300' }}
-            />
-            <Box width="100%" height="400px" position="relative">
-              <Image
-                src={detectedObjects[currentIndex].imageUrl}
-                alt={detectedObjects[currentIndex].label}
-                objectFit="contain"
-                width="100%"
-                height="100%"
+          <Flex direction="column" gap={6}>
+            <Flex justify="center" align="center" position="relative" minH="500px">
+              <IconButton
+                aria-label="Previous image"
+                icon={<ChevronLeftIcon boxSize={8} color={arrowIconColor} />}
+                position="absolute"
+                left={4}
+                onClick={handlePrevious}
+                zIndex={2}
+                size="lg"
+                isRound
+                bg={arrowBgColor}
+                _hover={{ bg: arrowHoverColor, transform: 'scale(1.1)' }}
+                transition="all 0.2s"
+                boxShadow="lg"
               />
-              <VStack spacing={2} mt={4} align="start" width="100%">
-                <Text fontSize="lg" fontWeight="bold">
-                  {detectedObjects[currentIndex].name}
+              <Box width="100%" height="500px" position="relative">
+                <Image
+                  src={currentObject.imageUrl}
+                  alt={currentObject.label}
+                  objectFit="contain"
+                  width="100%"
+                  height="100%"
+                  borderRadius="md"
+                />
+              </Box>
+              <IconButton
+                aria-label="Next image"
+                icon={<ChevronRightIcon boxSize={8} color={arrowIconColor} />}
+                position="absolute"
+                right={4}
+                onClick={handleNext}
+                zIndex={2}
+                size="lg"
+                isRound
+                bg={arrowBgColor}
+                _hover={{ bg: arrowHoverColor, transform: 'scale(1.1)' }}
+                transition="all 0.2s"
+                boxShadow="lg"
+              />
+            </Flex>
+            
+            <VStack spacing={4} align="start" width="100%" px={4}>
+              <Box width="100%">
+                <Text fontSize="2xl" fontWeight="bold" mb={2}>
+                  {currentObject.name}
                 </Text>
-                <Text fontSize="lg" color="gray.600">
-                  {detectedObjects[currentIndex].description}
+                <Text fontSize="lg" color="gray.600" lineHeight="tall" mb={4}>
+                  {currentObject.description}
                 </Text>
-                <Text fontSize="lg" color="green.600" fontWeight="semibold">
-                  Estimated Value: {detectedObjects[currentIndex].price}
+                <Text fontSize="xl" color="green.600" fontWeight="semibold">
+                  Estimated Value: {currentObject.price}
                 </Text>
-              </VStack>
-            </Box>
-            <IconButton
-              aria-label="Next image"
-              icon={<ChevronRightIcon boxSize={8} />}
-              position="absolute"
-              right={2}
-              onClick={handleNext}
-              zIndex={2}
-              variant="ghost"
-              size="lg"
-              isRound
-              _hover={{ bg: 'blackAlpha.300' }}
-            />
+                <Text fontSize="sm" color="gray.500" mt={2}>
+                  Confidence Score: {(currentObject.confidence * 100).toFixed(1)}%
+                </Text>
+              </Box>
+            </VStack>
           </Flex>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={onClose}>Close</Button>
+          <Button size="lg" onClick={onClose} colorScheme="blue">
+            Close
+          </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

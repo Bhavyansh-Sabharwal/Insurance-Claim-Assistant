@@ -110,7 +110,7 @@ def detect_objects():
             'success': True,
             'detected_objects': analyzed_objects
         }
-        print(f"[/detect] Response: {str(response_data)[:100]}")
+        print(f"[/detect] Response: {str(response_data)}")
         return jsonify(response_data)
 
     except Exception as e:
