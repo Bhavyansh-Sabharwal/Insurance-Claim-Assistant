@@ -55,7 +55,7 @@ def analyze_detected_objects(detected_objects):
             try:
                 price = float(price_str)
             except (ValueError, TypeError):
-                price = round(random.uniform(100, 500), 2)
+                price = 0
 
             analyzed_objects.append({
                 'label': obj['label'],
