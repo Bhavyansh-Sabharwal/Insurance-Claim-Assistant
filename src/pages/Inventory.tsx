@@ -592,10 +592,10 @@ const Inventory = () => {
     if (result.detectedObjects && result.detectedObjects.length > 0) {
       const transformedObjects = result.detectedObjects.map((obj: any) => ({
         label: obj.label,
-        name: obj.name,
-        confidence: obj.confidence || 1.0,
-        imageUrl: obj.image_url,
-        price: obj.estimated_price || '',
+        name: obj.name || 'Not Found',
+        confidence: obj.confidence ?? 1.0,
+        imageUrl: obj.imageUrl,
+        price: obj.price || '',
         description: obj.description || `A ${obj.label.toLowerCase()}`
       }));
       setDetectedObjects(transformedObjects);
@@ -866,7 +866,7 @@ const Inventory = () => {
         <DetectedObjectsModal
           isOpen={showDetectedObjects}
           onClose={() => setShowDetectedObjects(false)}
-          detectedObjects={detectedObjects}
+          detectedObjects={detectedObjects as any}
           selectedRoomId={selectedRoom?.id}
           onObjectAdded={(item) => {
             if (selectedRoom) {

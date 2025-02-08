@@ -105,29 +105,17 @@ export const processAndUploadImage = async (
     // Process each detected object from the response
     for (const object of detectionResult.detected_objects) {
       // Upload the cropped object image to Firebase
-      // const objectImageRef = ref(storage, `${folderPath}/object_${object.label}.jpg`);
-      // const objectImageBlob = await fetch(object.image_url).then(r => r.blob());
-      // await uploadBytes(objectImageRef, objectImageBlob);
-      // const objectImageUrl = await getDownloadURL(objectImageRef);
-
-      // // Get pricing analysis for the detected object
-      // const pricingResponse = await fetch('/api/analyze-price', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify({ image_url: objectImageUrl })
-      // });
-
-      // const pricingResult = await pricingResponse.json();
+      const objectImageRef = ref(storage, `${folderPath}/object_${object.label}.jpg`);
+      const objectImageBlob = await fetch(object.image_url).then(r => r.blob());
+      await uploadBytes(objectImageRef, objectImageBlob);
+      const objectImageUrl = await getDownloadURL(objectImageRef);
 
       // Create detected object metadata
       const detectedObject: DetectedObject = {
         label: object.label,
         name: object.name,
         confidence: object.confidence,
-        imageUrl: object.image_url,
-
+        imageUrl: objectImageUrl,
         price: object.estimated_price,
         description: object.description
       };
@@ -139,7 +127,7 @@ export const processAndUploadImage = async (
       await setDoc(doc(collection(db, 'photos')), {
         userId,
         itemId,
-        imageUrl: object.image_url,
+        imageUrl: objectImageUrl,
         folderPath,
         timestamp: new Date(),
         type: 'detected',
