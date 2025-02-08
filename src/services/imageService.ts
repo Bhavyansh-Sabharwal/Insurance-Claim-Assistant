@@ -83,6 +83,9 @@ export const processAndUploadImage = async (
     const api = 'http://127.0.0.1:4000';
     const detectionResponse = await fetch(`${api}/detect`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(formData)
     });
     // const detectionResponse = await fetch('/api/detect-objects', {
