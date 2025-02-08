@@ -1,10 +1,11 @@
 import os
 import json
+from groq import Groq
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv('OPENAI_API'))
+client = Groq(api_key=os.getenv('GROQ_API'))
 
 def analyze_image(image_url):
     """Analyze an image using OpenAI's Vision API to identify objects and estimate prices.
@@ -16,7 +17,7 @@ def analyze_image(image_url):
         dict: Analysis results containing name, description, and estimated price
     """
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="llama-3.2-90b-vision-preview",
         messages=[{
             "role": "user",
             "content": [
@@ -24,6 +25,7 @@ def analyze_image(image_url):
                 {"type": "image_url", "image_url": {"url": image_url}}
             ]
         }],
+        response_format={"type": "json_object"},
         max_tokens=3000
     )
 
