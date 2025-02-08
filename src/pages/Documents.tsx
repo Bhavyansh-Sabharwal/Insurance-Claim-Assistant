@@ -110,8 +110,8 @@ const Documents = () => {
 
     try {
       for (const file of Array.from(files)) {
-        // Create a storage reference
-        const fileName = `${currentUser.uid}/${Date.now()}-${file.name}`;
+        // Create a storage reference with users/ prefix
+        const fileName = `users/${currentUser.uid}/${Date.now()}-${file.name}`;
         const storageRef = ref(storage, fileName);
 
         // Upload file with progress monitoring
