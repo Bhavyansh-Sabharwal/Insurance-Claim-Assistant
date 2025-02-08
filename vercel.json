@@ -4,5 +4,17 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "builds": [
+    {
+      "src": "app/app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "app/app.py"
+    }
   ]
 } 
