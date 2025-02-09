@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, StyleSheet, pdf, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, StyleSheet, pdf, Font, Image } from '@react-pdf/renderer';
 import { Room, Item } from '../types/inventory';
 
 
@@ -51,17 +51,20 @@ const styles = StyleSheet.create({
   tableCell: {
     padding: '8 5',
   },
+  imageCell: {
+    width: '15%',
+  },
   nameCell: {
-    width: '25%',
+    width: '20%',
   },
   descriptionCell: {
-    width: '35%',
+    width: '25%',
   },
   categoryCell: {
-    width: '20%',
+    width: '15%',
   },
   valueCell: {
-    width: '20%',
+    width: '10%',
   },
   totalRow: {
     flexDirection: 'row',
@@ -108,6 +111,11 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'column',
   },
+  itemImage: {
+    width: '100%',
+    height: 50,
+    objectFit: 'cover', // Ensure the image fits within the cell
+  },
 });
 
 interface InventoryPDFProps {
@@ -147,6 +155,9 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
             <View style={styles.table}>
               {/* Table Header */}
               <View style={[styles.tableRow, styles.tableHeader]}>
+                <View style={[styles.tableCell, styles.imageCell]}>
+                  <Text style={styles.whiteText}>{t('inventory.image')}</Text>
+                </View>
                 <View style={[styles.tableCell, styles.nameCell]}>
                   <Text style={styles.whiteText}>{t('inventory.itemName')}</Text>
                 </View>
@@ -164,6 +175,9 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
               {/* Table Rows */}
               {room.items.map((item) => (
                 <View key={item.id} style={styles.tableRow}>
+                  <View style={[styles.tableCell, styles.imageCell]}>
+                    {item.imageUrl && <Image style={styles.itemImage} src={item.imageUrl} />}
+                  </View>
                   <View style={[styles.tableCell, styles.nameCell]}>
                     <Text>{item.name}</Text>
                   </View>
