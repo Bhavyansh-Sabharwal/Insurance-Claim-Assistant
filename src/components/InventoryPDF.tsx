@@ -176,7 +176,15 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
               {room.items.map((item) => (
                 <View key={item.id} style={styles.tableRow}>
                   <View style={[styles.tableCell, styles.imageCell]}>
-                    {item.imageUrl && <Image style={styles.itemImage} src={item.imageUrl} />}
+                    {item.imageUrl && (
+                      <Image
+                        style={styles.itemImage}
+                        src={item.imageUrl}
+                        onError={(error) => {
+                          console.error('Error loading image:', item.imageUrl, error);
+                        }}
+                      />
+                    )}
                   </View>
                   <View style={[styles.tableCell, styles.nameCell]}>
                     <Text>{item.name}</Text>
