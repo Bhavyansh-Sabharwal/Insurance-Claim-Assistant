@@ -179,7 +179,15 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
                     {item.imageUrl && (
                       <Image
                         style={styles.itemImage}
-                        src={{ uri: item.imageUrl }}
+                        src={{
+                          uri: item.imageUrl,
+                          // Example of adding headers (if needed):
+                          // method: 'GET',
+                          // headers: {
+                          //   'Authorization': 'Bearer YOUR_AUTH_TOKEN',
+                          //   'Other-Header': 'value'
+                          // },
+                        }}
                       />
                     )}
                   </View>
