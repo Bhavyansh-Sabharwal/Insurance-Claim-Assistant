@@ -180,9 +180,6 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
                       <Image
                         style={styles.itemImage}
                         src={item.imageUrl}
-                        onError={(error) => {
-                          console.error('Error loading image:', item.imageUrl, error);
-                        }}
                       />
                     )}
                   </View>
