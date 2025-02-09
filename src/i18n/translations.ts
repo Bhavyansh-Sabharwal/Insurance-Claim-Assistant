@@ -146,6 +146,8 @@ export type TranslationKey =
   | 'error.selectItemFirst'
   | 'inventory.selectItem'
   | 'inventory.selectItemPlaceholder'
+  | 'inventory.itemAdded'
+  | 'error.addItemFailed'
   | `custom.${string}`;
 
 type Translations = {
@@ -301,6 +303,8 @@ export const translations: Translations = {
     'error.selectItemFirst': 'Please add an item to the room first',
     'inventory.selectItem': 'Select Item',
     'inventory.selectItemPlaceholder': 'Choose an item to add image/receipt',
+    'inventory.itemAdded': 'Item added successfully',
+    'error.addItemFailed': 'Failed to add item',
   },
   es: {
     'setup.basicInfo': 'Información Básica',
@@ -448,6 +452,8 @@ export const translations: Translations = {
     'error.selectItemFirst': 'Por favor, agregue primero un elemento a la habitación',
     'inventory.selectItem': 'Seleccionar Elemento',
     'inventory.selectItemPlaceholder': 'Elija un elemento para agregar imagen/recibo',
+    'inventory.itemAdded': 'Elemento agregado exitosamente',
+    'error.addItemFailed': 'Error al agregar el elemento',
   },
   fr: {
     'setup.basicInfo': 'Informations de Base',
@@ -595,6 +601,8 @@ export const translations: Translations = {
     'error.selectItemFirst': 'Veuillez d\'abord ajouter un élément à la pièce',
     'inventory.selectItem': 'Sélectionner un Élément',
     'inventory.selectItemPlaceholder': 'Choisissez un élément pour ajouter une image/reçu',
+    'inventory.itemAdded': 'Élément ajouté avec succès',
+    'error.addItemFailed': 'Échec de l\'ajout de l\'élément',
   },
   de: {
     'setup.basicInfo': 'Grundinformationen',
@@ -742,6 +750,8 @@ export const translations: Translations = {
     'error.selectItemFirst': 'Bitte fügen Sie zuerst ein Element zum Raum hinzu',
     'inventory.selectItem': 'Element auswählen',
     'inventory.selectItemPlaceholder': 'Wählen Sie ein Element zum Hinzufügen von Bild/Beleg',
+    'inventory.itemAdded': 'Element erfolgreich hinzugefügt',
+    'error.addItemFailed': 'Element konnte nicht hinzugefügt werden',
   },
   hi: {
     'setup.basicInfo': 'मूल जानकारी',
@@ -889,5 +899,7 @@ export const translations: Translations = {
     'error.selectItemFirst': 'कृपया पहले कमरे में एक वस्तु जोड़ें',
     'inventory.selectItem': 'वस्तु चुनें',
     'inventory.selectItemPlaceholder': 'छवि/रसीद जोड़ने के लिए एक वस्तु चुनें',
+    'inventory.itemAdded': 'वस्तु सफलतापूर्वक जोड़ी गई',
+    'error.addItemFailed': 'वस्तु जोड़ने में विफल',
   },
 };

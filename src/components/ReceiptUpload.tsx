@@ -17,7 +17,7 @@ interface ReceiptUploadProps {
   onClose: () => void;
   itemId: string;
   userId: string;
-  onUploadComplete: (result: { text: string; imageUrl: string; name?: string; description?: string; price?: string }) => void;
+  onUploadComplete: (result: { text: string; imageUrl: string; analyzed_data: any }) => void;
 }
 
 export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
@@ -55,9 +55,7 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
         onUploadComplete({
           text: result.text,
           imageUrl: result.mainImageUrl,
-          name: result.analyzedData?.name,
-          description: result.analyzedData?.description,
-          price: result.analyzedData?.price
+          analyzed_data: result.analyzedData
         });
 
         toast({

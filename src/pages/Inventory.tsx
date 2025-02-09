@@ -24,6 +24,8 @@ import {
   useDisclosure,
   Select,
   useToast,
+  Image,
+  Textarea,
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon, EditIcon, AttachmentIcon, DownloadIcon } from '@chakra-ui/icons';
 import { ReceiptIcon } from '../components/Icons'; // Assuming you'll create a custom ReceiptIcon component
@@ -142,6 +144,19 @@ const SingleImageUploadModal = ({
   );
 };
 
+interface ItemCardProps {
+  item: Item;
+  isEditing: boolean;
+  editData: Partial<Item>;
+  onEdit: () => void;
+  onDelete: () => void;
+  onEditSubmit: () => void;
+  onEditCancel: () => void;
+  isOver: boolean;
+  onImageAdd: (itemId: string, imageUrl: string) => void;
+  onAddReceipt: (itemId: string, result: { text: string; imageUrl: string; analyzed_data?: { name: string; description: string; price: string } }) => void;
+}
+
 const ItemCard = ({ 
   item, 
   isEditing, 
@@ -153,18 +168,7 @@ const ItemCard = ({
   isOver,
   onImageAdd,
   onAddReceipt
-}: { 
-  item: Item;
-  isEditing: boolean;
-  editData: Partial<Item>;
-  onEdit: () => void;
-  onDelete: () => void;
-  onEditSubmit: () => void;
-  onEditCancel: () => void;
-  isOver: boolean;
-  onImageAdd: (itemId: string, imageUrl: string) => void;
-  onAddReceipt: (itemId: string, result: { text: string; imageUrl: string }) => void;
-}) => {
+}: ItemCardProps) => {
   const { t } = useLocalization();
   const bgColor = useColorModeValue('white', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
@@ -231,7 +235,7 @@ const ItemCard = ({
                   itemId={item.id}
                   userId={currentUser.uid}
                   onUploadComplete={(imageUrl) => {
-                    onAddReceipt(item.id, { text: '', imageUrl });
+                    onAddReceipt(item.id, { text: '', imageUrl, analyzed_data: { name: '', description: '', price: '' } });
                     onUploadModalClose();
                   }}
                 />
@@ -810,45 +814,21 @@ const Inventory = () => {
     }
   };
 
-  const handleReceiptUploadInternal = async (itemId: string, result: { text: string; imageUrl: string }) => {
-    if (!selectedRoom) return;
-
-    try {
-      const updatedItems = selectedRoom.items.map(item => {
-        if (item.id === itemId) {
-          return {
-            ...item,
-            receiptUrl: result.imageUrl,
-            receiptText: result.text || ''
-          };
-        }
-        return item;
-      });
-
-      await updateFirestore(`rooms/${selectedRoom.id}`, { items: updatedItems });
-      setRooms(rooms.map(room =>
-        room.id === selectedRoom.id ? { ...room, items: updatedItems } : room
-      ));
-      setSelectedRoom({ ...selectedRoom, items: updatedItems });
-
-      toast({
-        title: t('inventory.receiptAdded'),
-        status: 'success',
-        duration: 2000,
-      });
-    } catch (error) {
-      toast({
-        title: t('error.receiptAddFailed'),
-        status: 'error',
-        duration: 5000,
-      });
-    }
-  };
-
-  const handleReceiptUpload = (result: { text: string; imageUrl: string; analyzed_data: { name: string; description: string; price: string } }) => {
+  const handleReceiptUpload = (result: { text: string; imageUrl: string; analyzed_data?: { name: string; description: string; price: string } }) => {
+    console.log('Receipt Upload Result:', result);
+    console.log('Analyzed Data:', result.analyzed_data);
+    
     // Set the analyzed receipt data and show the modal
     setAnalyzedReceiptData({
-      ...result.analyzed_data,
+      name: result.analyzed_data?.name || 'Unknown Item',
+      description: result.analyzed_data?.description || result.text || '',
+      price: result.analyzed_data?.price || '$0.00',
+      imageUrl: result.imageUrl
+    });
+    console.log('Setting Analyzed Receipt Data:', {
+      name: result.analyzed_data?.name || 'Unknown Item',
+      description: result.analyzed_data?.description || result.text || '',
+      price: result.analyzed_data?.price || '$0.00',
       imageUrl: result.imageUrl
     });
     setShowAnalyzedReceipt(true);
@@ -1037,7 +1017,7 @@ const Inventory = () => {
                           }}
                           isOver={hoveredItemId === item.id}
                           onImageAdd={handleItemImageAdd}
-                          onAddReceipt={(itemId, result) => handleReceiptUploadInternal(itemId, result)}
+                          onAddReceipt={(itemId, result) => handleReceiptUpload(result)}
                         />
                       </SortableItem>
                     ))}
@@ -1156,16 +1136,41 @@ const Inventory = () => {
                 <Stack spacing={4}>
                   <FormControl>
                     <FormLabel>{t('inventory.itemName')}</FormLabel>
-                    <Text>{analyzedReceiptData.name}</Text>
+                    <Input
+                      value={analyzedReceiptData.name}
+                      isReadOnly
+                      bg="gray.50"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>{t('inventory.description')}</FormLabel>
-                    <Text>{analyzedReceiptData.description}</Text>
+                    <Textarea
+                      value={analyzedReceiptData.description}
+                      isReadOnly
+                      bg="gray.50"
+                      minH="100px"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>{t('inventory.estimatedValue')}</FormLabel>
-                    <Text>{analyzedReceiptData.price}</Text>
+                    <Input
+                      value={analyzedReceiptData.price}
+                      isReadOnly
+                      bg="gray.50"
+                    />
                   </FormControl>
+                  {analyzedReceiptData.imageUrl && (
+                    <Box>
+                      <FormLabel>{t('inventory.uploadImage')}</FormLabel>
+                      <Image 
+                        src={analyzedReceiptData.imageUrl} 
+                        alt="Receipt"
+                        maxH="200px"
+                        objectFit="contain"
+                        mx="auto"
+                      />
+                    </Box>
+                  )}
                 </Stack>
               )}
             </ModalBody>
@@ -1183,24 +1188,33 @@ const Inventory = () => {
                       description: analyzedReceiptData.description,
                       estimatedValue: parseFloat(analyzedReceiptData.price.replace(/[^0-9.]/g, '')),
                       room: selectedRoom.id,
-                      category: 'inventory.categories.electronics', // Default to electronics since it's a receipt
+                      category: 'inventory.categories.electronics',
                       imageUrl: analyzedReceiptData.imageUrl,
-                      receiptUrl: analyzedReceiptData.imageUrl
+                      receiptUrl: analyzedReceiptData.imageUrl,
+                      receiptText: analyzedReceiptData.description
                     };
 
-                    const updatedRooms = rooms.map(room =>
-                      room.id === selectedRoom.id
-                        ? { ...room, items: [...room.items, newItem] }
-                        : room
-                    );
-                    setRooms(updatedRooms);
-                    setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, newItem] });
-                    setShowAnalyzedReceipt(false);
-                    toast({
-                      title: t('inventory.addItem'),
-                      status: 'success',
-                      duration: 2000,
-                    });
+                    const updatedItems = [...selectedRoom.items, newItem];
+                    updateFirestore(`rooms/${selectedRoom.id}`, { items: updatedItems })
+                      .then(() => {
+                        setRooms(rooms.map(room =>
+                          room.id === selectedRoom.id ? { ...room, items: updatedItems } : room
+                        ));
+                        setSelectedRoom({ ...selectedRoom, items: updatedItems });
+                        setShowAnalyzedReceipt(false);
+                        toast({
+                          title: t('inventory.itemAdded'),
+                          status: 'success',
+                          duration: 2000,
+                        });
+                      })
+                      .catch(() => {
+                        toast({
+                          title: t('error.addItemFailed'),
+                          status: 'error',
+                          duration: 5000,
+                        });
+                      });
                   }
                 }}
               >
