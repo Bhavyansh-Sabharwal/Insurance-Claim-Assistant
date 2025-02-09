@@ -96,7 +96,7 @@ const Layout = ({ children }: LayoutProps) => {
       >
         <Link as={RouterLink} to="/" _hover={{ textDecoration: 'none' }}>
           <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" noOfLines={1}>
-            Insurance Claim Assistant
+            Recoverly
           </Text>
         </Link>
         <Spacer />

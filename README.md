@@ -1,10 +1,10 @@
-# Insurance Claim Assistant
+# Recoverly
 
-A comprehensive web application designed to help efficiently document, manage, and process their insurance claims. This platform streamlines the often overwhelming process of filing insurance claims by providing an intuitive interface for managing property inventory, documents, and collaboration with insurance adjusters.
+A comprehensive web application designed to help efficiently document, manage, and process insurance claims. This platform streamlines the often overwhelming process of filing insurance claims by providing an intuitive interface for managing property inventory, documents, and collaboration with insurance adjusters.
 
 ## Overview
 
-Survivors and claimants face the challenging task of documenting their losses for insurance claims. This application serves as a digital assistant that simplifies this process through:
+Users face the challenging task of documenting their losses for insurance claims. This application serves as a digital assistant that simplifies this process through:
 
 - **Smart Inventory Management**: Easily catalog and organize belongings room by room
 - **Document Organization**: Secure storage and management of important insurance-related documents
