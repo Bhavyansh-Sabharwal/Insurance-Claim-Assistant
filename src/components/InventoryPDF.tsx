@@ -179,7 +179,7 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
                     {item.imageUrl && (
                       <Image
                         style={styles.itemImage}
-                        src={(() => { console.log(item.imageUrl);  return item.imageUrl; })()}
+                        src={{ uri: item.imageUrl }}
                       />
                     )}
                   </View>
