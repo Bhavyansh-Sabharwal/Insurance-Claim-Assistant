@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, StyleSheet, pdf, Font, Image } from '@react-pdf/renderer';
 import { Room, Item } from '../types/inventory';
-
+import { storage } from '../config/firebase';
+import { ref, getDownloadURL } from 'firebase/storage';
 
 const styles = StyleSheet.create({
   page: {
@@ -179,17 +180,7 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
                     {item.imageUrl && (
                       <Image
                         style={styles.itemImage}
-                        src={{
-                          uri: item.imageUrl,
-                          // Example of adding headers (if needed):
-                          // method: 'GET',
-                          // headers: {
-                          //   'Authorization': 'Bearer YOUR_AUTH_TOKEN',
-                          //   'Other-Header': 'value'
-                          // },
-                        }}
-                        onLoad={() => console.log(`Image loaded successfully: ${item.imageUrl}`)}
-                        onError={(error) => console.error(`Error loading image ${item.imageUrl}:`, error)}
+                        src={item.imageUrl}
                       />
                     )}
                   </View>
@@ -230,6 +221,105 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
   );
 };
 
+const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
+  try {
+    // If the URL is already a signed URL (contains a token), use it directly
+    if (imageUrl.includes('token=')) {
+      // Send the signed URL to our backend proxy
+      const response = await fetch('http://localhost:4000/proxy-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: imageUrl })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch image through proxy');
+      }
+
+      const data = await response.json();
+      return data.base64Image;
+    }
+    
+    // Handle both full URLs and storage paths
+    let path;
+    if (imageUrl.includes('firebase.storage.googleapis.com')) {
+      // Extract path from full URL
+      path = decodeURIComponent(imageUrl.split('/o/')[1].split('?')[0]);
+    } else if (imageUrl.startsWith('/')) {
+      // Remove leading slash if present
+      path = imageUrl.substring(1);
+    } else {
+      path = imageUrl;
+    }
+    
+    // Get a fresh signed URL and convert to base64
+    const storageRef = ref(storage, path);
+    const signedUrl = await getDownloadURL(storageRef);
+    console.log('Got signed URL:', signedUrl);
+    
+    // Send the signed URL to our backend proxy
+    const response = await fetch('http://localhost:4000/proxy-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: signedUrl })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch image through proxy');
+    }
+
+    const data = await response.json();
+    return data.base64Image;
+  } catch (error) {
+    console.error('Error getting authenticated image URL:', error, imageUrl);
+    return ''; // Return empty string if we can't get the URL
+  }
+};
+
 export const generatePDF = async (props: InventoryPDFProps) => {
-  return await pdf(<InventoryPDF {...props} />).toBlob();
+  try {
+    console.log('Starting PDF generation...');
+    
+    // Get authenticated URLs for all images before generating the PDF
+    const roomsWithAuthUrls = await Promise.all(
+      props.rooms.map(async (room) => ({
+        ...room,
+        items: await Promise.all(
+          room.items.map(async (item) => {
+            console.log('Processing item:', item.name);
+            try {
+              const base64Url = item.imageUrl ? await getAuthenticatedImageUrl(item.imageUrl) : '';
+              console.log('Got base64 URL for', item.name, base64Url ? 'Successfully' : 'Failed');
+              return {
+                ...item,
+                imageUrl: base64Url
+              };
+            } catch (error) {
+              console.error('Error processing item image:', item.name, error);
+              return {
+                ...item,
+                imageUrl: ''
+              };
+            }
+          })
+        )
+      }))
+    );
+
+    // Create new props with authenticated URLs
+    const propsWithAuthUrls = {
+      ...props,
+      rooms: roomsWithAuthUrls
+    };
+
+    console.log('Generating PDF with processed images...');
+    return await pdf(<InventoryPDF {...propsWithAuthUrls} />).toBlob();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
 };

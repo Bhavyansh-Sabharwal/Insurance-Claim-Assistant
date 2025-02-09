@@ -7,6 +7,7 @@ import base64
 from dotenv import load_dotenv
 from convert_image import url_to_base64
 import json
+import requests
 
 # Add image-detection directory to Python path
 import sys
@@ -202,6 +203,37 @@ def read_receipt():
         error_response = {'error': str(e)[:100]}
         print(f"[/read-receipt] Error: {error_response}")
         return jsonify(error_response), 500
+
+@app.route('/proxy-image', methods=['POST'])
+def proxy_image():
+    """Handle POST requests to proxy image fetching from Firebase Storage.
+    
+    This endpoint accepts a URL in the request body and returns the image as a base64 string.
+    This helps bypass CORS restrictions when generating PDFs.
+    
+    Returns:
+        JSON: Base64 encoded image data or error message with appropriate status code
+    """
+    try:
+        data = request.get_json()
+        if not data or 'url' not in data:
+            return jsonify({'error': 'No image URL provided'}), 400
+            
+        url = data['url']
+        
+        # Fetch the image
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(response.content).decode('utf-8')
+        return jsonify({
+            'base64Image': f'data:image/jpeg;base64,{image_base64}'
+        })
+        
+    except Exception as e:
+        print('Error in proxy_image:', str(e))
+        return jsonify({'error': str(e)}), 500
 
 # Start the Flask server if running directly
 if __name__ == '__main__':
