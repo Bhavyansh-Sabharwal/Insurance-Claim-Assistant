@@ -138,6 +138,14 @@ export type TranslationKey =
   | 'inventory.uploading'
   | 'inventory.selectImage'
   | 'error.imageUploadFailed'
+  | 'inventory.viewReceipt'
+  | 'inventory.addReceipt'
+  | 'inventory.receiptAdded'
+  | 'error.receiptAddFailed'
+  | 'error.noItems'
+  | 'error.selectItemFirst'
+  | 'inventory.selectItem'
+  | 'inventory.selectItemPlaceholder'
   | `custom.${string}`;
 
 type Translations = {
@@ -285,6 +293,14 @@ export const translations: Translations = {
     'inventory.uploading': 'Uploading...',
     'inventory.selectImage': 'Select Image',
     'error.imageUploadFailed': 'Failed to upload image',
+    'inventory.viewReceipt': 'View Receipt',
+    'inventory.addReceipt': 'Add Receipt',
+    'inventory.receiptAdded': 'Receipt added successfully',
+    'error.receiptAddFailed': 'Failed to add receipt',
+    'error.noItems': 'No items available',
+    'error.selectItemFirst': 'Please add an item to the room first',
+    'inventory.selectItem': 'Select Item',
+    'inventory.selectItemPlaceholder': 'Choose an item to add image/receipt',
   },
   es: {
     'setup.basicInfo': 'Información Básica',
@@ -424,6 +440,14 @@ export const translations: Translations = {
     'inventory.uploading': 'Subiendo...',
     'inventory.selectImage': 'Seleccionar Imagen',
     'error.imageUploadFailed': 'Error al subir la imagen',
+    'inventory.viewReceipt': 'Ver Recibo',
+    'inventory.addReceipt': 'Agregar Recibo',
+    'inventory.receiptAdded': 'Recibo agregado exitosamente',
+    'error.receiptAddFailed': 'Failed to add receipt',
+    'error.noItems': 'No hay elementos disponibles',
+    'error.selectItemFirst': 'Por favor, agregue primero un elemento a la habitación',
+    'inventory.selectItem': 'Seleccionar Elemento',
+    'inventory.selectItemPlaceholder': 'Elija un elemento para agregar imagen/recibo',
   },
   fr: {
     'setup.basicInfo': 'Informations de Base',
@@ -563,6 +587,14 @@ export const translations: Translations = {
     'inventory.uploading': 'Téléchargement...',
     'inventory.selectImage': 'Sélectionner une Image',
     'error.imageUploadFailed': 'Échec du téléchargement de l\'image',
+    'inventory.viewReceipt': 'Voir le Reçu',
+    'inventory.addReceipt': 'Ajouter un Reçu',
+    'inventory.receiptAdded': 'Reçu ajouté avec succès',
+    'error.receiptAddFailed': 'Échec de l\'ajout du reçu',
+    'error.noItems': 'Aucun élément disponible',
+    'error.selectItemFirst': 'Veuillez d\'abord ajouter un élément à la pièce',
+    'inventory.selectItem': 'Sélectionner un Élément',
+    'inventory.selectItemPlaceholder': 'Choisissez un élément pour ajouter une image/reçu',
   },
   de: {
     'setup.basicInfo': 'Grundinformationen',
@@ -702,6 +734,14 @@ export const translations: Translations = {
     'inventory.uploading': 'Wird hochgeladen...',
     'inventory.selectImage': 'Bild Auswählen',
     'error.imageUploadFailed': 'Fehler beim Hochladen des Bildes',
+    'inventory.viewReceipt': 'Reçu anzeigen',
+    'inventory.addReceipt': 'Reçu hinzufügen',
+    'inventory.receiptAdded': 'Reçu erfolgreich hinzugefügt',
+    'error.receiptAddFailed': 'Fehler beim Hinzufügen des Reçus',
+    'error.noItems': 'Keine Elemente verfügbar',
+    'error.selectItemFirst': 'Bitte fügen Sie zuerst ein Element zum Raum hinzu',
+    'inventory.selectItem': 'Element auswählen',
+    'inventory.selectItemPlaceholder': 'Wählen Sie ein Element zum Hinzufügen von Bild/Beleg',
   },
   hi: {
     'setup.basicInfo': 'मूल जानकारी',
@@ -841,5 +881,13 @@ export const translations: Translations = {
     'inventory.uploading': 'अपलोड हो रहा है...',
     'inventory.selectImage': 'छवि चुनें',
     'error.imageUploadFailed': 'छवि अपलोड विफल',
+    'inventory.viewReceipt': 'रसीद देखें',
+    'inventory.addReceipt': 'रसीद जोड़ें',
+    'inventory.receiptAdded': 'रसीद सफलतापूर्वक जोड़ी गई',
+    'error.receiptAddFailed': 'रसीद जोड़ने में विफल',
+    'error.noItems': 'कोई वस्तु उपलब्ध नहीं',
+    'error.selectItemFirst': 'कृपया पहले कमरे में एक वस्तु जोड़ें',
+    'inventory.selectItem': 'वस्तु चुनें',
+    'inventory.selectItemPlaceholder': 'छवि/रसीद जोड़ने के लिए एक वस्तु चुनें',
   },
 };

@@ -7,7 +7,8 @@ import {
   useToast,
   Progress,
   Spinner,
-  Center
+  Center,
+  Button
 } from '@chakra-ui/react';
 import { processAndUploadReceipt } from '../services/receiptService';
 
@@ -77,48 +78,57 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
     }
   }, [itemId, userId, onUploadComplete, toast]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png']
     },
-    disabled: isUploading
+    disabled: isUploading,
+    noClick: true
   });
 
   return (
-    <Box
-      {...getRootProps()}
-      p={6}
-      border="2px dashed"
-      borderColor={isDragActive ? 'blue.400' : 'gray.200'}
-      borderRadius="md"
-      cursor={isUploading ? 'not-allowed' : 'pointer'}
-      opacity={isUploading ? 0.6 : 1}
-      position="relative"
-    >
-      <input {...getInputProps()} disabled={isUploading} />
-      <VStack spacing={2}>
-        {isUploading ? (
-          <Center p={4}>
-            <VStack spacing={4}>
-              <Spinner size="xl" />
-              <Text>{uploadProgress}</Text>
-              <Progress size="xs" width="100%" isIndeterminate />
-            </VStack>
-          </Center>
-        ) : (
-          <>
-            <Text>
-              {isDragActive
-                ? 'Drop the receipt here'
-                : 'Drag and drop a receipt here, or click to select'}
-            </Text>
-            <Text fontSize="sm" color="gray.500">
-              Supports images (JPG, PNG)
-            </Text>
-          </>
-        )}
-      </VStack>
-    </Box>
+    <VStack spacing={4} width="100%">
+      <Box
+        {...getRootProps()}
+        p={6}
+        border="2px dashed"
+        borderColor={isDragActive ? 'blue.400' : 'gray.200'}
+        borderRadius="md"
+        cursor={isUploading ? 'not-allowed' : 'pointer'}
+        opacity={isUploading ? 0.6 : 1}
+        position="relative"
+        width="100%"
+      >
+        <input {...getInputProps()} disabled={isUploading} />
+        <VStack spacing={2}>
+          {isUploading ? (
+            <Center p={4}>
+              <VStack spacing={4}>
+                <Spinner size="xl" />
+                <Text>{uploadProgress}</Text>
+                <Progress size="xs" width="100%" isIndeterminate />
+              </VStack>
+            </Center>
+          ) : (
+            <>
+              <Text>
+                {isDragActive
+                  ? 'Drop the receipt here'
+                  : 'Drag and drop a receipt here'}
+              </Text>
+              <Text fontSize="sm" color="gray.500">
+                Supports images (JPG, PNG)
+              </Text>
+            </>
+          )}
+        </VStack>
+      </Box>
+      {!isUploading && (
+        <Button colorScheme="green" width="100%" onClick={open}>
+          Select Receipt
+        </Button>
+      )}
+    </VStack>
   );
 };

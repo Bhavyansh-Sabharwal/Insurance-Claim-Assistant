@@ -77,6 +77,8 @@ type Item = {
   room: string;
   category: TranslationKey;
   imageUrl?: string;
+  receiptUrl?: string;
+  receiptText?: string;
 };
 
 type Room = {
@@ -169,7 +171,8 @@ const ItemCard = ({
   onEditSubmit, 
   onEditCancel,
   isOver,
-  onImageAdd
+  onImageAdd,
+  onAddReceipt
 }: { 
   item: Item;
   isEditing: boolean;
@@ -180,13 +183,19 @@ const ItemCard = ({
   onEditCancel: () => void;
   isOver: boolean;
   onImageAdd: (itemId: string, imageUrl: string) => void;
+  onAddReceipt: (itemId: string, result: { text: string; imageUrl: string }) => void;
 }) => {
-  const { } = useLocalization();
+  const { t } = useLocalization();
   const bgColor = useColorModeValue('white', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
   const { currentUser } = useAuth();
-  const { isOpen: isImageOpen, onOpen: onImageOpen, onClose: onImageClose } = useDisclosure();
-  const { isOpen: isReceiptOpen, onOpen: onReceiptOpen, onClose: onReceiptClose } = useDisclosure();
+  const { isOpen: isUploadModalOpen, onOpen: onUploadModalOpen, onClose: onUploadModalClose } = useDisclosure();
+  const [uploadType, setUploadType] = useState<'image' | 'receipt'>('image');
+
+  const handleUploadClick = (type: 'image' | 'receipt') => {
+    setUploadType(type);
+    onUploadModalOpen();
+  };
 
   return (
     <Card 
@@ -213,34 +222,45 @@ const ItemCard = ({
                 item={item}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                onAddImage={onImageOpen}
-                onAddReceipt={onReceiptOpen}
+                onAddImage={() => handleUploadClick('image')}
+                onAddReceipt={() => handleUploadClick('receipt')}
               />
             </Box>
           </Flex>
         )}
       </Stack>
       {currentUser && (
-        <>
-          <SingleImageUploadModal
-            isOpen={isImageOpen}
-            onClose={onImageClose}
-            itemId={item.id}
-            userId={currentUser.uid}
-            onImageUploaded={(imageUrl) => onImageAdd(item.id, imageUrl)}
-          />
-          <ReceiptUpload
-            isOpen={isReceiptOpen}
-            onClose={onReceiptClose}
-            itemId={item.id}
-            userId={currentUser.uid}
-            onUploadComplete={(result) => {
-              // Handle receipt upload completion
-              onImageAdd(item.id, result.imageUrl);
-              onReceiptClose();
-            }}
-          />
-        </>
+        <Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>
+              {uploadType === 'image' ? t('inventory.uploadImage') : t('inventory.addReceipt')}
+            </ModalHeader>
+            <ModalBody>
+              {uploadType === 'image' ? (
+                <SimpleFileUpload
+                  itemId={item.id}
+                  userId={currentUser.uid}
+                  onUploadComplete={(imageUrl) => {
+                    onImageAdd(item.id, imageUrl);
+                    onUploadModalClose();
+                  }}
+                />
+              ) : (
+                <ReceiptUpload
+                  isOpen={true}
+                  onClose={onUploadModalClose}
+                  itemId={item.id}
+                  userId={currentUser.uid}
+                  onUploadComplete={(result) => onAddReceipt(item.id, result)}
+                />
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={onUploadModalClose}>{t('button.close')}</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       )}
     </Card>
   );
@@ -389,8 +409,8 @@ const ItemDisplay = ({
             {formatCurrency(item.estimatedValue)}
           </Text>
         </Flex>
-        {item.imageUrl ? (
-          <Stack spacing={2}>
+        <Stack spacing={2}>
+          {item.imageUrl ? (
             <Button
               size="sm"
               leftIcon={<AttachmentIcon />}
@@ -400,18 +420,7 @@ const ItemDisplay = ({
             >
               {t('inventory.viewImage')}
             </Button>
-            <Button
-              size="sm"
-              leftIcon={<ReceiptIcon />}
-              variant="outline"
-              colorScheme="green"
-              onClick={onAddReceipt}
-            >
-              {t('common.addReceipt' as TranslationKey)}
-            </Button>
-          </Stack>
-        ) : (
-          <Stack spacing={2}>
+          ) : (
             <Button
               size="sm"
               leftIcon={<AddIcon />}
@@ -421,6 +430,18 @@ const ItemDisplay = ({
             >
               {t('inventory.addImage')}
             </Button>
+          )}
+          {item.receiptUrl ? (
+            <Button
+              size="sm"
+              leftIcon={<ReceiptIcon />}
+              variant="outline"
+              colorScheme="green"
+              onClick={() => window.open(item.receiptUrl, '_blank')}
+            >
+              {t('inventory.viewReceipt')}
+            </Button>
+          ) : (
             <Button
               size="sm"
               leftIcon={<ReceiptIcon />}
@@ -428,10 +449,10 @@ const ItemDisplay = ({
               colorScheme="green"
               onClick={onAddReceipt}
             >
-              {t('common.addReceipt' as TranslationKey)}
+              {t('inventory.addReceipt')}
             </Button>
-          </Stack>
-        )}
+          )}
+        </Stack>
       </Stack>
     </Stack>
   );
@@ -530,27 +551,7 @@ const Inventory = () => {
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const [uploadType, setUploadType] = useState<'image' | 'receipt'>('image');
-  const handleReceiptUpload = async (result: { text: string; imageUrl: string }) => {
-    if (selectedRoom) {
-      const newItem: Item = {
-        id: Date.now().toString(),
-        name: 'Receipt',
-        description: result.text,
-        estimatedValue: 0,
-        room: selectedRoom.id,
-        category: 'inventory.categories.other',
-        imageUrl: result.imageUrl
-      };
-  const updatedRooms = rooms.map(room =>
-        room.id === selectedRoom.id
-          ? { ...room, items: [...room.items, newItem] }
-          : room
-      );
-  setRooms(updatedRooms);
-  setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, newItem] });
-  onImageUploadClose();
-    }
-  };
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [newItem, setNewItem] = useState<Partial<Item>>({ category: categories[0] });
@@ -749,29 +750,6 @@ const Inventory = () => {
     }
   };
 
-  const handleImageUpload = (result: any) => {
-    if (result.detectedObjects && result.detectedObjects.length > 0) {
-      const transformedObjects = result.detectedObjects.map((obj: any) => ({
-        label: obj.label,
-        name: obj.name || 'Not Found',
-        confidence: obj.confidence ?? 1.0,
-        imageUrl: obj.imageUrl,
-        price: obj.price || '',
-        description: obj.description || `A ${obj.label.toLowerCase()}`,
-        originalImageUrl: result.imageUrl
-      }));
-      setDetectedObjects(transformedObjects);
-      setShowDetectedObjects(true);
-    }
-    toast({
-      title: 'Image uploaded successfully',
-      description: `Detected ${result.detectedObjects?.length || 0} objects in the image`,
-      status: 'success',
-      duration: 2000,
-    });
-    onImageUploadClose();
-  };
-
   const handleDownloadPDF = async () => {
     try {
       const blob = await generatePDF({
@@ -831,6 +809,66 @@ const Inventory = () => {
         duration: 5000,
       });
     }
+  };
+
+  const handleReceiptUploadInternal = async (itemId: string, result: { text: string; imageUrl: string }) => {
+    if (!selectedRoom) return;
+
+    try {
+      const updatedItems = selectedRoom.items.map(item => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            receiptUrl: result.imageUrl,
+            receiptText: result.text,
+            description: item.description || result.text
+          };
+        }
+        return item;
+      });
+
+      await updateFirestore(`rooms/${selectedRoom.id}`, { items: updatedItems });
+      setRooms(rooms.map(room =>
+        room.id === selectedRoom.id ? { ...room, items: updatedItems } : room
+      ));
+      setSelectedRoom({ ...selectedRoom, items: updatedItems });
+
+      toast({
+        title: t('inventory.receiptAdded'),
+        status: 'success',
+        duration: 2000,
+      });
+    } catch (error) {
+      toast({
+        title: t('error.receiptAddFailed'),
+        status: 'error',
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleImageUpload = (imageUrl: string) => {
+    // Handle general image upload (not tied to a specific item)
+    toast({
+      title: t('inventory.imageAdded'),
+      status: 'success',
+      duration: 2000,
+    });
+    onImageUploadClose();
+  };
+
+  const handleReceiptUpload = (result: { text: string; imageUrl: string }) => {
+    // Handle general receipt upload (not tied to a specific item)
+    toast({
+      title: t('inventory.receiptAdded'),
+      status: 'success',
+      duration: 2000,
+    });
+    onImageUploadClose();
+  };
+
+  const handleUploadClick = () => {
+    onImageUploadOpen();
   };
 
   return (
@@ -938,7 +976,7 @@ const Inventory = () => {
                     <Button
                       leftIcon={<AttachmentIcon />}
                       colorScheme="teal"
-                      onClick={onImageUploadOpen}
+                      onClick={handleUploadClick}
                     >
                       {t('inventory.addImage')}
                     </Button>
@@ -1001,6 +1039,7 @@ const Inventory = () => {
                           }}
                           isOver={hoveredItemId === item.id}
                           onImageAdd={handleItemImageAdd}
+                          onAddReceipt={(itemId, result) => handleReceiptUploadInternal(itemId, result)}
                         />
                       </SortableItem>
                     ))}
@@ -1038,35 +1077,46 @@ const Inventory = () => {
         <Modal isOpen={isImageUploadOpen} onClose={onImageUploadClose}>
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>{t('inventory.uploadImage')}</ModalHeader>
+            <ModalHeader>{uploadType === 'image' ? t('inventory.uploadImage') : t('inventory.addReceipt')}</ModalHeader>
             <ModalBody>
-              {selectedRoom && currentUser && (
-                <Box>
-                  <Flex gap={4} mb={4}>
-                    <Button flex={1} colorScheme="blue" onClick={() => setUploadType('image')}>
-                      Add Image
-                    </Button>
-                    <Button flex={1} colorScheme="green" onClick={() => setUploadType('receipt')}>
-                      Add Receipt
-                    </Button>
-                  </Flex>
-                  {uploadType === 'image' ? (
-                    <FileUpload
-                      itemId={selectedRoom.id}
-                      userId={currentUser.uid}
-                      onUploadComplete={handleImageUpload}
-                    />
-                  ) : (
-                    <ReceiptUpload
-                      isOpen={isReceiptUploadOpen}
-                      onClose={onReceiptUploadClose}
-                      itemId={selectedRoom.id}
-                      userId={currentUser.uid}
-                      onUploadComplete={handleReceiptUpload}
-                    />
-                  )}
-                </Box>
-              )}
+              <Stack spacing={4}>
+                <Flex gap={4} mb={4}>
+                  <Button 
+                    flex={1} 
+                    colorScheme={uploadType === 'image' ? 'blue' : 'gray'}
+                    onClick={() => setUploadType('image')}
+                  >
+                    {t('inventory.addImage')}
+                  </Button>
+                  <Button 
+                    flex={1} 
+                    colorScheme={uploadType === 'receipt' ? 'green' : 'gray'}
+                    onClick={() => setUploadType('receipt')}
+                  >
+                    {t('inventory.addReceipt')}
+                  </Button>
+                </Flex>
+
+                {currentUser && (
+                  <Box>
+                    {uploadType === 'image' ? (
+                      <SimpleFileUpload
+                        itemId="general"
+                        userId={currentUser.uid}
+                        onUploadComplete={handleImageUpload}
+                      />
+                    ) : (
+                      <ReceiptUpload
+                        isOpen={true}
+                        onClose={onImageUploadClose}
+                        itemId="general"
+                        userId={currentUser.uid}
+                        onUploadComplete={handleReceiptUpload}
+                      />
+                    )}
+                  </Box>
+                )}
+              </Stack>
             </ModalBody>
             <ModalFooter>
               <Button onClick={onImageUploadClose}>{t('button.close')}</Button>
