@@ -177,10 +177,10 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
               {room.items.map((item) => (
                 <View key={item.id} style={styles.tableRow}>
                   <View style={[styles.tableCell, styles.imageCell]}>
-                    {item.imageUrl && (
+                    {(item.imageUrl || item.receiptUrl) && (
                       <Image
                         style={styles.itemImage}
-                        src={item.imageUrl}
+                        src={item.imageUrl || item.receiptUrl}
                       />
                     )}
                   </View>
@@ -292,17 +292,20 @@ export const generatePDF = async (props: InventoryPDFProps) => {
           room.items.map(async (item) => {
             console.log('Processing item:', item.name);
             try {
-              const base64Url = item.imageUrl ? await getAuthenticatedImageUrl(item.imageUrl) : '';
+              const imageUrl = item.imageUrl || item.receiptUrl;
+              const base64Url = imageUrl ? await getAuthenticatedImageUrl(imageUrl) : '';
               console.log('Got base64 URL for', item.name, base64Url ? 'Successfully' : 'Failed');
               return {
                 ...item,
-                imageUrl: base64Url
+                imageUrl: base64Url,
+                receiptUrl: base64Url
               };
             } catch (error) {
               console.error('Error processing item image:', item.name, error);
               return {
                 ...item,
-                imageUrl: ''
+                imageUrl: '',
+                receiptUrl: ''
               };
             }
           })
