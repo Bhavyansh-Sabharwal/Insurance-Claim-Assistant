@@ -1,5 +1,5 @@
 import { Box, Button, Container, Heading, SimpleGrid, Text, VStack, Icon, useColorModeValue } from '@chakra-ui/react';
-import { FaClipboardList, FaUpload, FaUsers, FaGlobe } from 'react-icons/fa';
+import { FaClipboardList, FaUpload, FaUsers, FaGlobe, FaHome } from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
 import { useLocalization } from '../hooks/useLocalization';
 
@@ -40,10 +40,10 @@ const Home = () => {
             mb={6}
             color={useColorModeValue('blue.600', 'blue.200')}
           >
-            {t('home.heroTitle')}
+            Recover What Matters Most
           </Heading>
           <Text fontSize="xl" mb={8} color={useColorModeValue('gray.600', 'gray.300')}>
-            {t('home.heroSubtitle')}
+            Whether you've experienced a natural disaster, theft, or any unexpected loss, we're here to help you document, organize, and process your insurance claim with ease. Get back to what matters most - rebuilding your life.
           </Text>
           <Button
             as={RouterLink}
@@ -52,7 +52,7 @@ const Home = () => {
             colorScheme="blue"
             px={8}
           >
-            {t('home.getStarted')}
+            Start Your Recovery Journey
           </Button>
         </Container>
       </Box>
@@ -61,24 +61,24 @@ const Home = () => {
       <Container maxW="container.xl" py={8}>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={8}>
           <Feature
-            icon={FaClipboardList}
-            title={t('home.features.inventory')}
-            text={t('home.features.inventoryDesc')}
+            icon={FaHome}
+            title="Complete Home Inventory"
+            text="Easily document and organize all your belongings, room by room, with our smart inventory system. Perfect for any type of property loss."
           />
           <Feature
             icon={FaUpload}
-            title={t('home.features.documents')}
-            text={t('home.features.documentsDesc')}
+            title="Smart Documentation"
+            text="Upload and manage all your important documents, from receipts to warranties. Our AI helps identify and categorize your items automatically."
           />
           <Feature
             icon={FaUsers}
-            title={t('home.features.collaborate')}
-            text={t('home.features.collaborateDesc')}
+            title="Expert Collaboration"
+            text="Work seamlessly with insurance adjusters, restoration experts, and other professionals to expedite your claim process."
           />
           <Feature
             icon={FaGlobe}
-            title={t('home.features.accessibility')}
-            text={t('home.features.accessibilityDesc')}
+            title="Accessible for Everyone"
+            text="Available in multiple languages with an intuitive interface designed to help anyone navigate the insurance claim process with confidence."
           />
         </SimpleGrid>
       </Container>

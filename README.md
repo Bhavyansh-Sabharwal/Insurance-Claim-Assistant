@@ -1,14 +1,14 @@
 # Recoverly - Insurance Claim Assistant
 
-A comprehensive web application designed to help efficiently document, manage, and process insurance claims. This platform streamlines the often overwhelming process of filing insurance claims by providing an intuitive interface for managing property inventory, documents, and collaboration with insurance adjusters.
+A comprehensive web application designed to help individuals and families efficiently document, manage, and process insurance claims after experiencing property loss. Whether due to natural disasters, theft, accidents, or other unexpected events, this platform streamlines the overwhelming process of filing insurance claims by providing an intuitive interface for managing property inventory, documents, and collaboration with insurance adjusters.
 
 ## Overview
 
-Recoverly serves as a digital assistant that simplifies the insurance claim process through:
+Recoverly serves as a digital assistant that simplifies the insurance claim process for anyone facing property loss through:
 
-- **Smart Inventory Management**: Easily catalog and organize belongings room by room
-- **Document Organization**: Secure storage and management of important insurance-related documents
-- **Collaborative Features**: Streamlined communication with insurance adjusters and other stakeholders
+- **Smart Inventory Management**: Easily catalog and organize belongings room by room, perfect for documenting any type of loss
+- **Document Organization**: Secure storage and management of important insurance-related documents, from policies to receipts
+- **Collaborative Features**: Streamlined communication with insurance adjusters, restoration experts, and other stakeholders
 - **Multi-language Support**: Accessibility for diverse communities with support for English, Spanish, French, German, and Hindi
 - **Automated Image Processing**: AI-powered detection of items in room photos to assist with inventory creation
 - **Receipt Processing**: OCR and analysis of receipts for automated item entry
@@ -48,33 +48,33 @@ Recoverly serves as a digital assistant that simplifies the insurance claim proc
 ## Key Features
 
 ### Inventory Management
-- Room-by-room organization
-- Drag-and-drop interface
-- Estimated value tracking
-- Category classification
-- Photo attachments
+- Comprehensive room-by-room organization
+- Intuitive drag-and-drop interface
+- Smart value estimation tracking
+- Flexible category classification
+- Multiple photo attachments per item
 - Bulk item import from room photos
-- Receipt scanning and processing
+- Automated receipt scanning and processing
 
 ### Document Management
-- Secure file storage
-- Document categorization
-- Easy upload/download
-- Progress tracking
-- PDF report generation
+- Secure cloud-based file storage
+- Smart document categorization
+- Easy upload/download functionality
+- Claim progress tracking
+- Customizable PDF report generation
 
 ### User Experience
-- Responsive design
-- Multi-language interface
-- Intuitive navigation
-- Mobile-friendly interface
+- Clean, responsive design
+- Multi-language interface for global accessibility
+- Intuitive navigation for users of all tech levels
+- Mobile-friendly interface for documentation on-the-go
 
 ### Security & Privacy
-- Secure authentication
-- Protected data storage
+- Secure user authentication
+- Encrypted data storage
 - User-specific data isolation
-- Environment variable configuration
-- API key protection
+- Secure environment variable configuration
+- Protected API key management
 
 ## Getting Started
 
