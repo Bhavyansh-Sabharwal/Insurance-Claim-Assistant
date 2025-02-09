@@ -10,5 +10,7 @@ dependencies = [
     "requests",
     "numpy",
     "openai",
+    "opencv-python-headless",
     "python-dotenv",
+    "groq>=0.18.0",
 ]

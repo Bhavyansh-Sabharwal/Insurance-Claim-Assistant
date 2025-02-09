@@ -88,7 +88,7 @@ const defaultRooms: TranslationKey[] = [
   'common.bathroom',
 ];
 
-const createDefaultRooms = (userId: string): Room[] => 
+const createDefaultRooms = (userId: string): Room[] =>
   defaultRooms.map((name, index) => ({
     id: (index + 1).toString(),
     name,
@@ -157,13 +157,13 @@ interface ItemCardProps {
   onAddReceipt: (itemId: string, result: { text: string; imageUrl: string; analyzed_data?: { name: string; description: string; price: string } }) => void;
 }
 
-const ItemCard = ({ 
-  item, 
-  isEditing, 
-  editData, 
-  onEdit, 
-  onDelete, 
-  onEditSubmit, 
+const ItemCard = ({
+  item,
+  isEditing,
+  editData,
+  onEdit,
+  onDelete,
+  onEditSubmit,
   onEditCancel,
   isOver,
   onImageAdd,
@@ -182,8 +182,8 @@ const ItemCard = ({
   };
 
   return (
-    <Card 
-      p={4} 
+    <Card
+      p={4}
       bg={isOver ? hoverBgColor : bgColor}
       boxShadow="md"
       transition="all 0.2s ease"
@@ -251,11 +251,11 @@ const ItemCard = ({
   );
 };
 
-const EditItemForm = ({ 
-  item, 
-  editData, 
-  onSubmit, 
-  onCancel 
+const EditItemForm = ({
+  item,
+  editData,
+  onSubmit,
+  onCancel
 }: {
   item: Item;
   editData: Partial<Item>;
@@ -287,9 +287,9 @@ const EditItemForm = ({
   };
 
   return (
-    <Stack 
-      spacing={2} 
-      width="100%" 
+    <Stack
+      spacing={2}
+      width="100%"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={handleKeyDown}
     >
@@ -327,9 +327,9 @@ const EditItemForm = ({
       />
       <Flex gap={2} justify="flex-end">
         <Button size="sm" onClick={onCancel}>{t('button.cancel')}</Button>
-        <Button 
-          size="sm" 
-          colorScheme="blue" 
+        <Button
+          size="sm"
+          colorScheme="blue"
           onClick={handleSubmit}
           isDisabled={!formData.name?.trim()}
         >
@@ -340,9 +340,9 @@ const EditItemForm = ({
   );
 };
 
-const ItemDisplay = ({ 
-  item, 
-  onEdit, 
+const ItemDisplay = ({
+  item,
+  onEdit,
   onDelete,
   onAddImage,
   onAddReceipt
@@ -378,8 +378,8 @@ const ItemDisplay = ({
             />
           </Flex>
         </Flex>
-        <Text 
-          color="gray.500" 
+        <Text
+          color="gray.500"
           minH="24px"
           wordBreak="break-word"
           noOfLines={2}
@@ -523,10 +523,10 @@ const Inventory = () => {
   const { t, formatCurrency } = useLocalization();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { 
-    isOpen: isImageUploadOpen, 
-    onOpen: onImageUploadOpen, 
-    onClose: onImageUploadClose 
+  const {
+    isOpen: isImageUploadOpen,
+    onOpen: onImageUploadOpen,
+    onClose: onImageUploadClose
   } = useDisclosure();
   const {
     isOpen: isReceiptUploadOpen,
@@ -566,7 +566,7 @@ const Inventory = () => {
       try {
         const q = query(collection(db, 'rooms'), where('userId', '==', currentUser.uid));
         const querySnapshot = await getDocs(q);
-        
+
         if (querySnapshot.empty) {
           const defaultRooms = createDefaultRooms(currentUser.uid);
           const createdRooms: Room[] = [];
@@ -577,7 +577,7 @@ const Inventory = () => {
             await setDoc(roomRef, roomWithId);
             createdRooms.push(roomWithId);
           }
-          
+
           setRooms(createdRooms);
         } else {
           const fetchedRooms = querySnapshot.docs
@@ -603,10 +603,10 @@ const Inventory = () => {
       if (active.id.toString().startsWith('room-')) {
         const oldIndex = rooms.findIndex(room => `room-${room.id}` === active.id);
         const newIndex = rooms.findIndex(room => `room-${room.id}` === over.id);
-        
+
         const newRooms = arrayMove(rooms, oldIndex, newIndex)
           .map((room, index) => ({ ...room, orderIndex: index }));
-        
+
         setRooms(newRooms);
 
         const batch = writeBatch(db);
@@ -618,10 +618,10 @@ const Inventory = () => {
       else if (selectedRoom) {
         const oldIndex = selectedRoom.items.findIndex(item => item.id === active.id);
         const newIndex = selectedRoom.items.findIndex(item => item.id === over.id);
-        
+
         const newItems = arrayMove(selectedRoom.items, oldIndex, newIndex);
         await updateFirestore(`rooms/${selectedRoom.id}`, { items: newItems });
-        
+
         setRooms(rooms.map(room =>
           room.id === selectedRoom.id ? { ...room, items: newItems } : room
         ));
@@ -700,11 +700,11 @@ const Inventory = () => {
 
     try {
       await deleteDoc(doc(db, 'rooms', roomId));
-      
+
       const updatedRooms = rooms
         .filter(room => room.id !== roomId)
         .map((room, index) => ({ ...room, orderIndex: index }));
-      
+
       setRooms(updatedRooms);
       if (selectedRoom?.id === roomId) setSelectedRoom(null);
 
@@ -747,20 +747,20 @@ const Inventory = () => {
       if (!currentUser) return;
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       const address = userDoc.exists() ? userDoc.data()?.propertyDetails?.address || '' : '';
-  
+
       const blob = await generatePDF({
         rooms,
         t,
         formatCurrency,
         address,
       });
-      
+
       // const blob = await generatePDF({
       //   rooms,
       //   t,
       //   formatCurrency,
       // });
-      
+
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -769,7 +769,7 @@ const Inventory = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       toast({
         title: t('inventory.pdfDownloaded'),
         status: 'success',
@@ -817,7 +817,7 @@ const Inventory = () => {
   const handleReceiptUpload = (result: { text: string; imageUrl: string; analyzed_data?: { name: string; description: string; price: string } }) => {
     console.log('Receipt Upload Result:', result);
     console.log('Analyzed Data:', result.analyzed_data);
-    
+
     // Set the analyzed receipt data and show the modal
     setAnalyzedReceiptData({
       name: result.analyzed_data?.name || 'Unknown Item',
@@ -850,10 +850,10 @@ const Inventory = () => {
   };
 
   return (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
-      onDragEnd={handleDragEnd} 
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
     >
@@ -946,8 +946,8 @@ const Inventory = () => {
               <Stack spacing={4}>
                 <Flex justify="space-between" align="center">
                   <Heading size="md">
-                    {selectedRoom && (selectedRoom.name.startsWith('custom.') ? 
-                      selectedRoom.name.slice(7) : 
+                    {selectedRoom && (selectedRoom.name.startsWith('custom.') ?
+                      selectedRoom.name.slice(7) :
                       t(selectedRoom.name as TranslationKey))} {t('inventory.items')}
                   </Heading>
                   <Flex gap={2}>
@@ -1059,15 +1059,15 @@ const Inventory = () => {
             <ModalBody>
               <Stack spacing={4}>
                 <Flex gap={4} mb={4}>
-                  <Button 
-                    flex={1} 
+                  <Button
+                    flex={1}
                     colorScheme={uploadType === 'image' ? 'blue' : 'gray'}
                     onClick={() => setUploadType('image')}
                   >
                     {t('inventory.addImage')}
                   </Button>
-                  <Button 
-                    flex={1} 
+                  <Button
+                    flex={1}
                     colorScheme={uploadType === 'receipt' ? 'green' : 'gray'}
                     onClick={() => setUploadType('receipt')}
                   >
@@ -1122,7 +1122,7 @@ const Inventory = () => {
               setRooms(updatedRooms);
               setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, item] });
             }
-            setShowDetectedObjects(false);
+            // setShowDetectedObjects(false);
           }}
         />
 
@@ -1162,8 +1162,8 @@ const Inventory = () => {
                   {analyzedReceiptData.imageUrl && (
                     <Box>
                       <FormLabel>{t('inventory.uploadImage')}</FormLabel>
-                      <Image 
-                        src={analyzedReceiptData.imageUrl} 
+                      <Image
+                        src={analyzedReceiptData.imageUrl}
                         alt="Receipt"
                         maxH="200px"
                         objectFit="contain"
