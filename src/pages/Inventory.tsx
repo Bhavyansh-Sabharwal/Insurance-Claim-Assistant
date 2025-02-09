@@ -39,6 +39,7 @@ import {
   deleteDoc,
   updateDoc,
   writeBatch,
+  getDoc,
 } from 'firebase/firestore';
 import {
   DndContext,
@@ -752,11 +753,22 @@ const Inventory = () => {
 
   const handleDownloadPDF = async () => {
     try {
+      if (!currentUser) return;
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const address = userDoc.exists() ? userDoc.data()?.propertyDetails?.address || '' : '';
+  
       const blob = await generatePDF({
         rooms,
         t,
         formatCurrency,
+        address,
       });
+      
+      // const blob = await generatePDF({
+      //   rooms,
+      //   t,
+      //   formatCurrency,
+      // });
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
