@@ -67,9 +67,6 @@ const styles = StyleSheet.create({
   valueCell: {
     width: '10%',
   },
-  receiptCell: {
-    width: '15%',
-  },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -172,10 +169,7 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
                   <Text style={styles.whiteText}>{t('inventory.category')}</Text>
                 </View>
                 <View style={[styles.tableCell, styles.valueCell]}>
-                  <Text style={styles.whiteText}>Value ($)</Text>
-                </View>
-                <View style={[styles.tableCell, styles.receiptCell]}>
-                  <Text style={styles.whiteText}>Receipt</Text>
+                  <Text style={styles.whiteText}>{t('inventory.estimatedValue')}</Text>
                 </View>
               </View>
 
@@ -183,32 +177,24 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
               {room.items.map((item) => (
                 <View key={item.id} style={styles.tableRow}>
                   <View style={[styles.tableCell, styles.imageCell]}>
-                    {item.imageUrl ? (
+                    {item.imageUrl && (
                       <Image
                         style={styles.itemImage}
                         src={item.imageUrl}
                       />
-                    ) : <Text> </Text>}
+                    )}
                   </View>
                   <View style={[styles.tableCell, styles.nameCell]}>
-                    <Text>{item.name || ' '}</Text>
+                    <Text>{item.name}</Text>
                   </View>
                   <View style={[styles.tableCell, styles.descriptionCell]}>
-                    <Text>{item.description || ' '}</Text>
+                    <Text>{item.description}</Text>
                   </View>
                   <View style={[styles.tableCell, styles.categoryCell]}>
-                    <Text>{t(item.category) || ' '}</Text>
+                    <Text>{t(item.category)}</Text>
                   </View>
                   <View style={[styles.tableCell, styles.valueCell]}>
-                    <Text>{formatCurrency(item.estimatedValue) || ' '}</Text>
-                  </View>
-                  <View style={[styles.tableCell, styles.receiptCell]}>
-                    {item.receiptUrl ? (
-                      <Image
-                        style={styles.itemImage}
-                        src={item.receiptUrl}
-                      />
-                    ) : <Text> </Text>}
+                    <Text>{formatCurrency(item.estimatedValue)}</Text>
                   </View>
                 </View>
               ))}
@@ -237,9 +223,6 @@ const InventoryPDF = ({ rooms, t, formatCurrency, address }: InventoryPDFProps) 
 
 const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
   try {
-    // If URL is empty, return early
-    if (!imageUrl) return '';
-
     // If the URL is already a signed URL (contains a token), use it directly
     if (imageUrl.includes('token=')) {
       // Send the signed URL to our backend proxy
@@ -252,16 +235,10 @@ const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
       });
 
       if (!response.ok) {
-        console.error('Proxy request failed:', await response.text());
-        return '';
+        throw new Error('Failed to fetch image through proxy');
       }
 
       const data = await response.json();
-      if (!data.base64Image) {
-        console.error('No base64Image in response');
-        return '';
-      }
-
       return data.base64Image;
     }
     
@@ -280,7 +257,7 @@ const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
     // Get a fresh signed URL and convert to base64
     const storageRef = ref(storage, path);
     const signedUrl = await getDownloadURL(storageRef);
-    console.log('Processing URL:', signedUrl);
+    console.log('Got signed URL:', signedUrl);
     
     // Send the signed URL to our backend proxy
     const response = await fetch('http://localhost:4000/proxy-image', {
@@ -292,20 +269,14 @@ const getAuthenticatedImageUrl = async (imageUrl: string): Promise<string> => {
     });
 
     if (!response.ok) {
-      console.error('Proxy request failed:', await response.text());
-      return '';
+      throw new Error('Failed to fetch image through proxy');
     }
 
     const data = await response.json();
-    if (!data.base64Image) {
-      console.error('No base64Image in response');
-      return '';
-    }
-
     return data.base64Image;
   } catch (error) {
     console.error('Error getting authenticated image URL:', error, imageUrl);
-    return '';
+    return ''; // Return empty string if we can't get the URL
   }
 };
 
@@ -321,26 +292,17 @@ export const generatePDF = async (props: InventoryPDFProps) => {
           room.items.map(async (item) => {
             console.log('Processing item:', item.name);
             try {
-              // Process image and receipt URLs in parallel
-              const [base64Url, receiptBase64Url] = await Promise.all([
-                getAuthenticatedImageUrl(item.imageUrl),
-                getAuthenticatedImageUrl(item.receiptUrl)
-              ]);
-              
+              const base64Url = item.imageUrl ? await getAuthenticatedImageUrl(item.imageUrl) : '';
               console.log('Got base64 URL for', item.name, base64Url ? 'Successfully' : 'Failed');
-              console.log('Got receipt URL for', item.name, receiptBase64Url ? 'Successfully' : 'Failed');
-              
               return {
                 ...item,
-                imageUrl: base64Url || '',
-                receiptUrl: receiptBase64Url || ''
+                imageUrl: base64Url
               };
             } catch (error) {
-              console.error('Error processing item images:', item.name, error);
+              console.error('Error processing item image:', item.name, error);
               return {
                 ...item,
-                imageUrl: '',
-                receiptUrl: ''
+                imageUrl: ''
               };
             }
           })
