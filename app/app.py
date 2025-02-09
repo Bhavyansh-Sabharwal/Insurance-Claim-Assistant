@@ -13,6 +13,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../image-detection'))
 from detection import detect_and_crop_objects
 from pricing import analyze_image
+from receipts import read_ocr
 
 # Load environment variables
 load_dotenv()
@@ -171,6 +172,37 @@ def analyze_image_endpoint():
         print(f"[/analyze] Error: {error_response}")
         return jsonify(error_response), 500
 
+@app.route('/read-receipt', methods=['POST'])
+def read_receipt():
+    """Handle POST requests to read text from receipt images using OCR.
+
+    This endpoint accepts:
+    1. A URL to an image in the request JSON
+
+    Returns:
+        JSON: OCR results or error message with appropriate status code
+    """
+    try:
+        json_data = request.get_json()
+        if not json_data or 'url' not in json_data:
+            return jsonify({'error': 'No image URL provided'}), 400
+
+        image_url = json_data['url']
+        ocr_text = read_ocr(image_url)
+
+        response_data = {
+            'success': True,
+            'text': ocr_text
+        }
+        print(f"[/read-receipt] Response: {str(response_data)}")
+        return jsonify(response_data)
+
+    except Exception as e:
+        error_response = {'error': str(e)[:100]}
+        print(f"[/read-receipt] Error: {error_response}")
+        return jsonify(error_response), 500
+
 # Start the Flask server if running directly
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=True)
+

@@ -130,6 +130,14 @@ export type TranslationKey =
   | 'inventory.pdfDownloaded'
   | 'inventory.totalValue'
   | 'error.pdfGenerationFailed'
+  | 'inventory.imageUrl'
+  | 'inventory.viewImage'
+  | 'inventory.imageAdded'
+  | 'error.imageAddFailed'
+  | 'inventory.dragOrClick'
+  | 'inventory.uploading'
+  | 'inventory.selectImage'
+  | 'error.imageUploadFailed'
   | `custom.${string}`;
 
 type Translations = {
@@ -269,6 +277,14 @@ export const translations: Translations = {
     'inventory.pdfDownloaded': 'PDF downloaded successfully',
     'inventory.totalValue': 'Total Value',
     'error.pdfGenerationFailed': 'Failed to generate PDF',
+    'inventory.imageUrl': 'Image URL',
+    'inventory.viewImage': 'View Image',
+    'inventory.imageAdded': 'Image added successfully',
+    'error.imageAddFailed': 'Failed to add image',
+    'inventory.dragOrClick': 'Drag and drop an image here, or click to select',
+    'inventory.uploading': 'Uploading...',
+    'inventory.selectImage': 'Select Image',
+    'error.imageUploadFailed': 'Failed to upload image',
   },
   es: {
     'setup.basicInfo': 'Información Básica',
@@ -400,6 +416,14 @@ export const translations: Translations = {
     'inventory.pdfDownloaded': 'PDF descargado exitosamente',
     'inventory.totalValue': 'Valor Total',
     'error.pdfGenerationFailed': 'Error al generar PDF',
+    'inventory.imageUrl': 'URL de la imagen',
+    'inventory.viewImage': 'Ver imagen',
+    'inventory.imageAdded': 'Imagen agregada exitosamente',
+    'error.imageAddFailed': 'Failed to add image',
+    'inventory.dragOrClick': 'Arrastra y suelta una imagen aquí, o haz clic para seleccionar',
+    'inventory.uploading': 'Subiendo...',
+    'inventory.selectImage': 'Seleccionar Imagen',
+    'error.imageUploadFailed': 'Error al subir la imagen',
   },
   fr: {
     'setup.basicInfo': 'Informations de Base',
@@ -531,6 +555,14 @@ export const translations: Translations = {
     'inventory.pdfDownloaded': 'PDF téléchargé avec succès',
     'inventory.totalValue': 'Valeur Totale',
     'error.pdfGenerationFailed': 'Échec de la génération de PDF',
+    'inventory.imageUrl': 'URL de l\'image',
+    'inventory.viewImage': 'Voir l\'image',
+    'inventory.imageAdded': 'Image ajoutée avec succès',
+    'error.imageAddFailed': 'Échec de l\'ajout de l\'image',
+    'inventory.dragOrClick': 'Glissez et déposez une image ici, ou cliquez pour sélectionner',
+    'inventory.uploading': 'Téléchargement...',
+    'inventory.selectImage': 'Sélectionner une Image',
+    'error.imageUploadFailed': 'Échec du téléchargement de l\'image',
   },
   de: {
     'setup.basicInfo': 'Grundinformationen',
@@ -662,6 +694,14 @@ export const translations: Translations = {
     'inventory.pdfDownloaded': 'PDF erfolgreich heruntergeladen',
     'inventory.totalValue': 'Gesamtwert',
     'error.pdfGenerationFailed': 'PDF-Generierung fehlgeschlagen',
+    'inventory.imageUrl': 'Bild-URL',
+    'inventory.viewImage': 'Bild anzeigen',
+    'inventory.imageAdded': 'Bild erfolgreich hinzugefügt',
+    'error.imageAddFailed': 'Fehler beim Hinzufügen des Bildes',
+    'inventory.dragOrClick': 'Bild hierher ziehen oder klicken zum Auswählen',
+    'inventory.uploading': 'Wird hochgeladen...',
+    'inventory.selectImage': 'Bild Auswählen',
+    'error.imageUploadFailed': 'Fehler beim Hochladen des Bildes',
   },
   hi: {
     'setup.basicInfo': 'मूल जानकारी',
@@ -793,5 +833,13 @@ export const translations: Translations = {
     'inventory.pdfDownloaded': 'PDF सफलतापूर्वक डाउनलोड हुआ',
     'inventory.totalValue': 'कुल मूल्य',
     'error.pdfGenerationFailed': 'PDF उत्पन्न विफल हुआ',
+    'inventory.imageUrl': 'छवि URL',
+    'inventory.viewImage': 'छवि देखें',
+    'inventory.imageAdded': 'छवि सफलतापूर्वक जोड़ी गई',
+    'error.imageAddFailed': 'छवि जोड़ने में विफल',
+    'inventory.dragOrClick': 'यहां छवि खींचें और छोड़ें, या चयन करने के लिए क्लिक करें',
+    'inventory.uploading': 'अपलोड हो रहा है...',
+    'inventory.selectImage': 'छवि चुनें',
+    'error.imageUploadFailed': 'छवि अपलोड विफल',
   },
 };

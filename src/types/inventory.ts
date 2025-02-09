@@ -7,6 +7,7 @@ export type Item = {
   estimatedValue: number;
   room: string;
   category: TranslationKey;
+  imageUrl?: string;
 };
 
 export type Room = {

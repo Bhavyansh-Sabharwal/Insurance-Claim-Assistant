@@ -102,7 +102,8 @@ export const DetectedObjectsModal: React.FC<DetectedObjectsModalProps> = ({
       description: currentObject.description || `A ${currentObject.label.toLowerCase()}`,
       estimatedValue: parseFloat(currentObject.price?.replace(/[^0-9.]/g, '') || '0'),
       room: selectedRoomId,
-      category: 'inventory.categories.other'
+      category: 'inventory.categories.other',
+      imageUrl: currentObject.originalImageUrl || currentObject.imageUrl
     };
 
     try {
