@@ -66,3 +66,35 @@ def analyze_image_groq(image_url):
     except json.JSONDecodeError as error:
         raise ValueError(f"Failed to parse JSON from response: {error}\nContent received: {content}")
     return result
+
+def analyze_receipt_text(text):
+    """Analyze receipt text to extract item details and price.
+
+    Args:
+        text (str): The OCR text from the receipt
+
+    Returns:
+        dict: Analysis results containing name, description, and price
+    """
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{
+            "role": "user",
+            "content": f"""Analyze this receipt text and extract the main item purchased, its description, and price.
+            Format the response as a JSON with the following fields:
+            - name: The main item name
+            - description: A description including any relevant details from the receipt
+            - price: The price in USD format (e.g. $XX.XX)
+
+            Receipt text:
+            {text}"""
+        }],
+        max_tokens=3000
+    )
+
+    content = str(response.choices[0].message.content).strip()
+    try:
+        result = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Failed to parse JSON from response: {error}\nContent received: {content}")
+    return result

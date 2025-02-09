@@ -17,7 +17,7 @@ interface ReceiptUploadProps {
   onClose: () => void;
   itemId: string;
   userId: string;
-  onUploadComplete: (result: { text: string; imageUrl: string; }) => void;
+  onUploadComplete: (result: { text: string; imageUrl: string; name?: string; description?: string; price?: string }) => void;
 }
 
 export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
@@ -54,7 +54,10 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
 
         onUploadComplete({
           text: result.text,
-          imageUrl: result.mainImageUrl
+          imageUrl: result.mainImageUrl,
+          name: result.analyzedData?.name,
+          description: result.analyzedData?.description,
+          price: result.analyzedData?.price
         });
 
         toast({
@@ -83,8 +86,7 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png']
     },
-    disabled: isUploading,
-    noClick: true
+    disabled: isUploading
   });
 
   return (
@@ -115,7 +117,7 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
               <Text>
                 {isDragActive
                   ? 'Drop the receipt here'
-                  : 'Drag and drop a receipt here'}
+                  : 'Drag and drop a receipt here, or click to select'}
               </Text>
               <Text fontSize="sm" color="gray.500">
                 Supports images (JPG, PNG)

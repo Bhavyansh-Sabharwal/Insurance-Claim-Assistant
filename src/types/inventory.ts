@@ -8,6 +8,8 @@ export type Item = {
   room: string;
   category: TranslationKey;
   imageUrl?: string;
+  receiptUrl?: string;
+  receiptText?: string;
 };
 
 export type Room = {
