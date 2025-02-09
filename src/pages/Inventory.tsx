@@ -213,6 +213,7 @@ const ItemCard = ({
           </Flex>
         )}
       </Stack>
+
       {currentUser && (
         <Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose}>
           <ModalOverlay />
@@ -231,11 +232,13 @@ const ItemCard = ({
                   }}
                 />
               ) : (
-                <SimpleFileUpload
+                <ReceiptUpload
+                  isOpen={true}
+                  onClose={onUploadModalClose}
                   itemId={item.id}
                   userId={currentUser.uid}
-                  onUploadComplete={(imageUrl) => {
-                    onAddReceipt(item.id, { text: '', imageUrl, analyzed_data: { name: '', description: '', price: '' } });
+                  onUploadComplete={(result) => {
+                    onAddReceipt(item.id, result);
                     onUploadModalClose();
                   }}
                 />
@@ -1083,17 +1086,16 @@ const Inventory = () => {
                         userId={currentUser.uid}
                         onUploadComplete={(result) => {
                           setDetectedObjects(result.detectedObjects);
-                          setShowDetectedObjects(true);
-                          onImageUploadClose();
+                          handleImageUpload(result.imageUrl);
                         }}
                       />
                     ) : (
                       <ReceiptUpload
                         isOpen={true}
                         onClose={onImageUploadClose}
-                        itemId="general"
+                        itemId={selectedItemId || 'general'}
                         userId={currentUser.uid}
-                        onUploadComplete={handleReceiptUpload}
+                        onUploadComplete={(result) => handleReceiptUpload(result)}
                       />
                     )}
                   </Box>
@@ -1189,7 +1191,6 @@ const Inventory = () => {
                       estimatedValue: parseFloat(analyzedReceiptData.price.replace(/[^0-9.]/g, '')),
                       room: selectedRoom.id,
                       category: 'inventory.categories.electronics',
-                      imageUrl: analyzedReceiptData.imageUrl,
                       receiptUrl: analyzedReceiptData.imageUrl,
                       receiptText: analyzedReceiptData.description
                     };

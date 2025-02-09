@@ -225,10 +225,22 @@ def proxy_image():
         response = requests.get(url)
         response.raise_for_status()
         
+        # Get content type from response headers
+        content_type = response.headers.get('content-type', '')
+        if 'image/' not in content_type:
+            # Try to detect from URL if header is not reliable
+            if url.lower().endswith('.png'):
+                content_type = 'image/png'
+            elif url.lower().endswith(('.jpg', '.jpeg')):
+                content_type = 'image/jpeg'
+            else:
+                content_type = 'image/jpeg'  # Default to JPEG
+        
         # Convert to base64
         image_base64 = base64.b64encode(response.content).decode('utf-8')
         return jsonify({
-            'base64Image': f'data:image/jpeg;base64,{image_base64}'
+            'base64Image': f'data:{content_type};base64,{image_base64}',
+            'contentType': content_type
         })
         
     except Exception as e:

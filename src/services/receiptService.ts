@@ -45,13 +45,13 @@ export const processAndUploadReceipt = async (
 
     const ocrResult = await ocrResponse.json();
 
-    // Store the receipt data in Firestore
+    // Store the receipt data in Firestore receipts collection
     const receiptRef = doc(collection(db, 'receipts'));
     await setDoc(receiptRef, {
       id: receiptRef.id,
       userId,
       itemId,
-      imageUrl: mainImageUrl,
+      receiptUrl: mainImageUrl,  // Store as receiptUrl to be consistent
       folderPath,
       text: ocrResult.text,
       analyzedData: ocrResult.analyzed_data,
@@ -59,9 +59,8 @@ export const processAndUploadReceipt = async (
       type: 'receipt'
     });
 
-    // If this is attached to an item, find and update the item in its room
+    // If this is attached to an item, only update the estimated value if not set
     if (itemId !== 'general') {
-      // Find the room containing this item
       const roomsQuery = query(
         collection(db, 'rooms'),
         where('userId', '==', userId)
@@ -74,19 +73,18 @@ export const processAndUploadReceipt = async (
         const itemIndex = items.findIndex((item: any) => item.id === itemId);
         
         if (itemIndex !== -1) {
-          // Update the item with receipt information
-          items[itemIndex] = {
-            ...items[itemIndex],
-            receiptUrl: mainImageUrl,
-            receiptText: ocrResult.text,
-            // Only update these fields if they're not already set
-            name: items[itemIndex].name || ocrResult.analyzed_data.name,
-            description: items[itemIndex].description || ocrResult.analyzed_data.description,
-            estimatedValue: items[itemIndex].estimatedValue || parseFloat(ocrResult.analyzed_data.price.replace(/[^0-9.]/g, '')) || 0
-          };
-          
-          // Update the room document
-          await updateDoc(roomDoc.ref, { items });
+          // Only update the estimated value if not already set
+          const currentItem = items[itemIndex];
+          if (!currentItem.estimatedValue) {
+            const newEstimatedValue = parseFloat(ocrResult.analyzed_data.price.replace(/[^0-9.]/g, '')) || 0;
+            items[itemIndex] = {
+              ...currentItem,
+              estimatedValue: newEstimatedValue
+            };
+            
+            // Update the room document
+            await updateDoc(roomDoc.ref, { items });
+          }
           break;
         }
       }
