@@ -150,3 +150,44 @@ export const processAndUploadImage = async (
   }
 };
 
+/**
+ * Uploads a single image file to Firebase Storage without any additional processing
+ * 
+ * @param userId - The ID of the user uploading the image
+ * @param itemId - The ID of the inventory item associated with the image
+ * @param file - The image file to be uploaded
+ * @returns Promise resolving to the uploaded image URL
+ */
+export const uploadSingleImage = async (
+  userId: string,
+  itemId: string,
+  file: File
+): Promise<string> => {
+  try {
+    // Create a unique folder path for this upload using timestamp
+    const timestamp = Date.now();
+    const folderPath = `inventory-images/${userId}/${itemId}/${timestamp}`;
+
+    // Upload the image to Firebase Storage
+    const imageRef = ref(storage, `${folderPath}/image.jpg`);
+    await uploadBytes(imageRef, file);
+    const imageUrl = await getDownloadURL(imageRef);
+
+    // Store the image metadata in Firestore photos collection
+    const photoRef = doc(collection(db, 'photos'));
+    await setDoc(photoRef, {
+      userId,
+      itemId,
+      imageUrl,
+      folderPath,
+      timestamp: new Date(),
+      type: 'inventory'
+    });
+
+    return imageUrl;
+  } catch (error) {
+    console.error('Error in uploadSingleImage:', error);
+    throw error;
+  }
+};
+

@@ -62,6 +62,7 @@ import { Language } from '../contexts/PreferencesContext';
 import { FileUpload } from '../components/FileUpload';
 import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
 import { generatePDF } from '../components/InventoryPDF';
+import { SimpleFileUpload } from '../components/SimpleFileUpload';
 
 type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
 
@@ -73,6 +74,7 @@ type Item = {
   estimatedValue: number;
   room: string;
   category: TranslationKey;
+  imageUrl?: string;
 };
 
 type Room = {
@@ -116,6 +118,46 @@ const updateFirestore = async (path: string, data: any) => {
 };
 
 // Components
+const SingleImageUploadModal = ({
+  isOpen,
+  onClose,
+  itemId,
+  userId,
+  onImageUploaded,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  itemId: string;
+  userId: string;
+  onImageUploaded: (imageUrl: string) => void;
+}) => {
+  const { t } = useLocalization();
+
+  const handleUploadComplete = (imageUrl: string) => {
+    onImageUploaded(imageUrl);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>{t('inventory.uploadImage')}</ModalHeader>
+        <ModalBody>
+          <SimpleFileUpload
+            itemId={itemId}
+            userId={userId}
+            onUploadComplete={handleUploadComplete}
+          />
+        </ModalBody>
+        <ModalFooter>
+          <Button onClick={onClose}>{t('button.close')}</Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
 const ItemCard = ({ 
   item, 
   isEditing, 
@@ -124,7 +166,8 @@ const ItemCard = ({
   onDelete, 
   onEditSubmit, 
   onEditCancel,
-  isOver
+  isOver,
+  onImageAdd
 }: { 
   item: Item;
   isEditing: boolean;
@@ -134,10 +177,13 @@ const ItemCard = ({
   onEditSubmit: () => void;
   onEditCancel: () => void;
   isOver: boolean;
+  onImageAdd: (itemId: string, imageUrl: string) => void;
 }) => {
   const { } = useLocalization();
   const bgColor = useColorModeValue('white', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.100', 'gray.600');
+  const { currentUser } = useAuth();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Card 
@@ -164,11 +210,21 @@ const ItemCard = ({
                 item={item}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onAddImage={onOpen}
               />
             </Box>
           </Flex>
         )}
       </Stack>
+      {currentUser && (
+        <SingleImageUploadModal
+          isOpen={isOpen}
+          onClose={onClose}
+          itemId={item.id}
+          userId={currentUser.uid}
+          onImageUploaded={(imageUrl) => onImageAdd(item.id, imageUrl)}
+        />
+      )}
     </Card>
   );
 };
@@ -190,6 +246,7 @@ const EditItemForm = ({
     description: editData.description || item.description,
     category: editData.category || item.category,
     estimatedValue: editData.estimatedValue || item.estimatedValue,
+    imageUrl: editData.imageUrl || item.imageUrl,
   });
 
   const handleSubmit = () => {
@@ -241,6 +298,11 @@ const EditItemForm = ({
         onChange={(e) => setFormData({ ...formData, estimatedValue: Number(e.target.value) })}
         placeholder={t('inventory.estimatedValue')}
       />
+      <Input
+        value={formData.imageUrl ?? ''}
+        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+        placeholder={t('inventory.imageUrl')}
+      />
       <Flex gap={2} justify="flex-end">
         <Button size="sm" onClick={onCancel}>{t('button.cancel')}</Button>
         <Button 
@@ -259,11 +321,13 @@ const EditItemForm = ({
 const ItemDisplay = ({ 
   item, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onAddImage
 }: {
   item: Item;
   onEdit: () => void;
   onDelete: () => void;
+  onAddImage: () => void;
 }) => {
   const { t, formatCurrency } = useLocalization();
   return (
@@ -299,12 +363,35 @@ const ItemDisplay = ({
           {item.description}
         </Text>
       </Box>
-      <Flex justify="space-between" align="center">
-        <Badge colorScheme="blue">{t(item.category)}</Badge>
-        <Text fontWeight="bold">
-          {formatCurrency(item.estimatedValue)}
-        </Text>
-      </Flex>
+      <Stack>
+        <Flex justify="space-between" align="center">
+          <Badge colorScheme="blue">{t(item.category)}</Badge>
+          <Text fontWeight="bold">
+            {formatCurrency(item.estimatedValue)}
+          </Text>
+        </Flex>
+        {item.imageUrl ? (
+          <Button
+            size="sm"
+            leftIcon={<AttachmentIcon />}
+            variant="outline"
+            colorScheme="blue"
+            onClick={() => window.open(item.imageUrl, '_blank')}
+          >
+            {t('inventory.viewImage')}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            leftIcon={<AddIcon />}
+            variant="outline"
+            colorScheme="teal"
+            onClick={onAddImage}
+          >
+            {t('inventory.addImage')}
+          </Button>
+        )}
+      </Stack>
     </Stack>
   );
 };
@@ -363,6 +450,13 @@ const AddItemModal = ({
                 type="number"
                 value={newItem.estimatedValue || ''}
                 onChange={e => setNewItem({ ...newItem, estimatedValue: Number(e.target.value) })}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>{t('inventory.imageUrl')}</FormLabel>
+              <Input
+                value={newItem.imageUrl || ''}
+                onChange={e => setNewItem({ ...newItem, imageUrl: e.target.value })}
               />
             </FormControl>
           </Stack>
@@ -596,7 +690,8 @@ const Inventory = () => {
         confidence: obj.confidence ?? 1.0,
         imageUrl: obj.imageUrl,
         price: obj.price || '',
-        description: obj.description || `A ${obj.label.toLowerCase()}`
+        description: obj.description || `A ${obj.label.toLowerCase()}`,
+        originalImageUrl: result.imageUrl
       }));
       setDetectedObjects(transformedObjects);
       setShowDetectedObjects(true);
@@ -636,6 +731,35 @@ const Inventory = () => {
       console.error('Error generating PDF:', error);
       toast({
         title: t('error.pdfGenerationFailed'),
+        status: 'error',
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleItemImageAdd = async (itemId: string, imageUrl: string) => {
+    if (!selectedRoom) return;
+
+    try {
+      const updatedItems = selectedRoom.items.map(item =>
+        item.id === itemId ? { ...item, imageUrl } : item
+      );
+
+      await updateFirestore(`rooms/${selectedRoom.id}`, { items: updatedItems });
+
+      setRooms(rooms.map(room =>
+        room.id === selectedRoom.id ? { ...room, items: updatedItems } : room
+      ));
+      setSelectedRoom({ ...selectedRoom, items: updatedItems });
+
+      toast({
+        title: t('inventory.imageAdded'),
+        status: 'success',
+        duration: 2000,
+      });
+    } catch (error) {
+      toast({
+        title: t('error.imageAddFailed'),
         status: 'error',
         duration: 5000,
       });
@@ -809,6 +933,7 @@ const Inventory = () => {
                             setEditItemData({});
                           }}
                           isOver={hoveredItemId === item.id}
+                          onImageAdd={handleItemImageAdd}
                         />
                       </SortableItem>
                     ))}
