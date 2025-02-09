@@ -2,10 +2,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection } from 'firebase/firestore';
 import { storage, db } from '../config/firebase';
 
+export interface AnalyzedData {
+  name: string;
+  description: string;
+  price: string;
+}
+
 export interface ReceiptProcessResult {
   mainImageUrl: string;
   text: string;
   folderPath: string;
+  analyzedData: AnalyzedData;
 }
 
 export const processAndUploadReceipt = async (
@@ -33,7 +40,7 @@ export const processAndUploadReceipt = async (
       type: 'receipt'
     });
 
-    // Send receipt to Python backend for OCR processing
+    // Send receipt to Python backend for OCR processing and analysis
     const api = 'http://127.0.0.1:4000';
     const ocrResponse = await fetch(`${api}/read-receipt`, {
       method: 'POST',
@@ -52,7 +59,8 @@ export const processAndUploadReceipt = async (
     return {
       mainImageUrl,
       text: ocrResult.text,
-      folderPath
+      folderPath,
+      analyzedData: ocrResult.analyzed_data
     };
   } catch (error) {
     console.error('Error in processAndUploadReceipt:', error);

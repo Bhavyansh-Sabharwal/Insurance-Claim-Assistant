@@ -66,29 +66,8 @@ import { ReceiptUpload } from '../components/ReceiptUpload';
 import { DetectedObjectsModal } from '../components/DetectedObjectsModal';
 import { generatePDF } from '../components/InventoryPDF';
 import { SimpleFileUpload } from '../components/SimpleFileUpload';
-
-type TranslationKey = keyof typeof import('../i18n/translations').translations[Language];
-
-// Types
-type Item = {
-  id: string;
-  name: string;
-  description: string;
-  estimatedValue: number;
-  room: string;
-  category: TranslationKey;
-  imageUrl?: string;
-  receiptUrl?: string;
-  receiptText?: string;
-};
-
-type Room = {
-  id: string;
-  name: TranslationKey | string;
-  items: Item[];
-  userId: string;
-  orderIndex: number;
-};
+import { TranslationKey } from '../i18n/translations';
+import { Item, Room } from '../types/inventory';
 
 // Constants
 const categories: TranslationKey[] = [
@@ -248,12 +227,13 @@ const ItemCard = ({
                   }}
                 />
               ) : (
-                <ReceiptUpload
-                  isOpen={true}
-                  onClose={onUploadModalClose}
+                <SimpleFileUpload
                   itemId={item.id}
                   userId={currentUser.uid}
-                  onUploadComplete={(result) => onAddReceipt(item.id, result)}
+                  onUploadComplete={(imageUrl) => {
+                    onAddReceipt(item.id, { text: '', imageUrl });
+                    onUploadModalClose();
+                  }}
                 />
               )}
             </ModalBody>
@@ -563,6 +543,13 @@ const Inventory = () => {
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
   const [showDetectedObjects, setShowDetectedObjects] = useState(false);
   const [detectedObjects, setDetectedObjects] = useState<Array<{ label: string; imageUrl: string }>>([]);
+  const [showAnalyzedReceipt, setShowAnalyzedReceipt] = useState(false);
+  const [analyzedReceiptData, setAnalyzedReceiptData] = useState<{
+    name: string;
+    description: string;
+    price: string;
+    imageUrl: string;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -832,8 +819,7 @@ const Inventory = () => {
           return {
             ...item,
             receiptUrl: result.imageUrl,
-            receiptText: result.text,
-            description: item.description || result.text
+            receiptText: result.text || ''
           };
         }
         return item;
@@ -859,20 +845,20 @@ const Inventory = () => {
     }
   };
 
+  const handleReceiptUpload = (result: { text: string; imageUrl: string; analyzed_data: { name: string; description: string; price: string } }) => {
+    // Set the analyzed receipt data and show the modal
+    setAnalyzedReceiptData({
+      ...result.analyzed_data,
+      imageUrl: result.imageUrl
+    });
+    setShowAnalyzedReceipt(true);
+    onImageUploadClose();
+  };
+
   const handleImageUpload = (imageUrl: string) => {
     // Handle general image upload (not tied to a specific item)
     toast({
       title: t('inventory.imageAdded'),
-      status: 'success',
-      duration: 2000,
-    });
-    onImageUploadClose();
-  };
-
-  const handleReceiptUpload = (result: { text: string; imageUrl: string }) => {
-    // Handle general receipt upload (not tied to a specific item)
-    toast({
-      title: t('inventory.receiptAdded'),
       status: 'success',
       duration: 2000,
     });
@@ -1112,10 +1098,14 @@ const Inventory = () => {
                 {currentUser && (
                   <Box>
                     {uploadType === 'image' ? (
-                      <SimpleFileUpload
+                      <FileUpload
                         itemId="general"
                         userId={currentUser.uid}
-                        onUploadComplete={handleImageUpload}
+                        onUploadComplete={(result) => {
+                          setDetectedObjects(result.detectedObjects);
+                          setShowDetectedObjects(true);
+                          onImageUploadClose();
+                        }}
                       />
                     ) : (
                       <ReceiptUpload
@@ -1155,6 +1145,70 @@ const Inventory = () => {
             setShowDetectedObjects(false);
           }}
         />
+
+        {/* Analyzed Receipt Modal */}
+        <Modal isOpen={showAnalyzedReceipt} onClose={() => setShowAnalyzedReceipt(false)}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>{t('inventory.addReceipt')}</ModalHeader>
+            <ModalBody>
+              {analyzedReceiptData && (
+                <Stack spacing={4}>
+                  <FormControl>
+                    <FormLabel>{t('inventory.itemName')}</FormLabel>
+                    <Text>{analyzedReceiptData.name}</Text>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>{t('inventory.description')}</FormLabel>
+                    <Text>{analyzedReceiptData.description}</Text>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>{t('inventory.estimatedValue')}</FormLabel>
+                    <Text>{analyzedReceiptData.price}</Text>
+                  </FormControl>
+                </Stack>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={() => setShowAnalyzedReceipt(false)}>
+                {t('button.cancel')}
+              </Button>
+              <Button
+                colorScheme="blue"
+                onClick={() => {
+                  if (analyzedReceiptData && selectedRoom) {
+                    const newItem: Item = {
+                      id: Date.now().toString(),
+                      name: analyzedReceiptData.name,
+                      description: analyzedReceiptData.description,
+                      estimatedValue: parseFloat(analyzedReceiptData.price.replace(/[^0-9.]/g, '')),
+                      room: selectedRoom.id,
+                      category: 'inventory.categories.electronics', // Default to electronics since it's a receipt
+                      imageUrl: analyzedReceiptData.imageUrl,
+                      receiptUrl: analyzedReceiptData.imageUrl
+                    };
+
+                    const updatedRooms = rooms.map(room =>
+                      room.id === selectedRoom.id
+                        ? { ...room, items: [...room.items, newItem] }
+                        : room
+                    );
+                    setRooms(updatedRooms);
+                    setSelectedRoom({ ...selectedRoom, items: [...selectedRoom.items, newItem] });
+                    setShowAnalyzedReceipt(false);
+                    toast({
+                      title: t('inventory.addItem'),
+                      status: 'success',
+                      duration: 2000,
+                    });
+                  }
+                }}
+              >
+                {t('button.save')}
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Container>
     </DndContext>
   );

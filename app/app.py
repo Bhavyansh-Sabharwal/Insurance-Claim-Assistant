@@ -12,7 +12,7 @@ import json
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '../image-detection'))
 from detection import detect_and_crop_objects
-from pricing import analyze_image
+from pricing import analyze_image, analyze_receipt_text
 from receipts import read_ocr
 
 # Load environment variables
@@ -180,7 +180,7 @@ def read_receipt():
     1. A URL to an image in the request JSON
 
     Returns:
-        JSON: OCR results or error message with appropriate status code
+        JSON: OCR results and analyzed data, or error message with appropriate status code
     """
     try:
         json_data = request.get_json()
@@ -188,11 +188,12 @@ def read_receipt():
             return jsonify({'error': 'No image URL provided'}), 400
 
         image_url = json_data['url']
-        ocr_text = read_ocr(image_url)
+        result = read_ocr(image_url)
 
         response_data = {
             'success': True,
-            'text': ocr_text
+            'text': result['text'],
+            'analyzed_data': result['analyzed_data']
         }
         print(f"[/read-receipt] Response: {str(response_data)}")
         return jsonify(response_data)
